@@ -1,0 +1,9 @@
+{
+  "id": "properties-toolkit",
+  "name": "Properties Toolkit",
+  "version": "1.0.0",
+  "minAppVersion": "1.4.0",
+  "description": "Comprehensive property management: delete empty values, convert types (list↔text), transform between properties and tags with multilingual support (EN/FR)",
+  "author": "Christian Vanhenten",
+  "isDesktopOnly": false
+}

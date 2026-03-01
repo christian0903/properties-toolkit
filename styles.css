@@ -1,0 +1,111 @@
+/* Properties Toolkit Styles */
+
+.pt-modal {
+  padding: 1em;
+}
+
+.pt-modal h2 {
+  margin-bottom: 0.5em;
+}
+
+.pt-summary {
+  margin-bottom: 1em;
+  color: var(--text-muted);
+}
+
+.pt-preview-list {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  margin-bottom: 1em;
+}
+
+.pt-preview-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5em 1em;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.pt-preview-item:last-child {
+  border-bottom: none;
+}
+
+.pt-file-name {
+  font-weight: 500;
+}
+
+.pt-detail {
+  color: var(--text-muted);
+  font-size: 0.9em;
+}
+
+.pt-button-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5em;
+  margin-top: 1em;
+}
+
+.pt-progress-container {
+  margin: 1em 0;
+}
+
+.pt-progress-container progress {
+  width: 100%;
+  height: 20px;
+}
+
+.pt-progress-text {
+  margin-top: 0.5em;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.pt-suggest-title {
+  font-weight: 500;
+}
+
+.pt-suggest-desc {
+  color: var(--text-muted);
+  display: block;
+  margin-top: 0.25em;
+}
+
+.pt-radio-file {
+  padding: 0.75em 1em;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.pt-radio-file:last-child {
+  border-bottom: none;
+}
+
+.pt-radio-file-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5em;
+}
+
+.pt-radio-values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1em;
+}
+
+.pt-radio-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  cursor: pointer;
+}
+
+.pt-radio-label input[type="radio"] {
+  cursor: pointer;
+}
+
+.pt-doc {
+  padding: 1em;
+  overflow-y: auto;
+}
