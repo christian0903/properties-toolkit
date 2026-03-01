@@ -3,6 +3,7 @@ import { Language } from '../lang/LanguageManager';
 export interface TransformerSettings {
 	language: Language;
 	targetFolder: string;
+	analysisFileName: string;
 	propertyList: string;
 	overwrite: boolean;
 	removeSourceAfterTransform: boolean;
@@ -16,6 +17,7 @@ export interface TransformerSettings {
 export const DEFAULT_TRANSFORMER_SETTINGS: TransformerSettings = {
 	language: 'en',
 	targetFolder: '',
+	analysisFileName: 'properties-analysis',
 	propertyList: 'statut,type',
 	overwrite: false,
 	removeSourceAfterTransform: false,

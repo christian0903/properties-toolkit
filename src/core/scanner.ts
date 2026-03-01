@@ -1,5 +1,6 @@
-import { App, TFile } from 'obsidian';
+import { App, TFile, TFolder, normalizePath } from 'obsidian';
 import { PropertyInfo, EmptyScanResult, PropertyAnalysis, PropertyOccurrence } from '../types/mgr-types';
+import { TransformerSettings } from '../types/transformer-types';
 
 function isEmpty(value: any): boolean {
   if (value === null || value === undefined) return true;
@@ -15,12 +16,65 @@ function getValueType(value: any): string {
 }
 
 export class VaultScanner {
-  constructor(private app: App) {}
+  private settings: TransformerSettings;
 
-  /** Collect all unique property names across the vault with metadata */
+  constructor(private app: App, settings: TransformerSettings) {
+    this.settings = settings;
+  }
+
+  /**
+   * Update settings reference
+   */
+  updateSettings(settings: TransformerSettings): void {
+    this.settings = settings;
+  }
+
+  /**
+   * Get target files based on targetFolder setting
+   */
+  private getTargetFiles(): TFile[] {
+    const folderPath = this.settings.targetFolder.trim();
+
+    if (!folderPath) {
+      return this.app.vault.getMarkdownFiles();
+    }
+
+    const normalizedPath = normalizePath(folderPath);
+    const folder = this.app.vault.getAbstractFileByPath(normalizedPath);
+
+    if (!folder) {
+      return [];
+    }
+
+    if (folder instanceof TFile) {
+      return folder.extension === 'md' ? [folder] : [];
+    }
+
+    if (folder instanceof TFolder) {
+      const getAllFiles = (currentFolder: TFolder): TFile[] => {
+        const result: TFile[] = [];
+
+        for (const child of currentFolder.children) {
+          if (child instanceof TFile && child.extension === 'md') {
+            result.push(child);
+          } else if (child instanceof TFolder) {
+            result.push(...getAllFiles(child));
+          }
+        }
+
+        return result;
+      };
+
+      return getAllFiles(folder);
+    }
+
+    return [];
+  }
+
+  /** Collect all unique property names across the target files with metadata */
   getAllProperties(): PropertyInfo[] {
     const map = new Map<string, PropertyInfo>();
-    const files = this.app.vault.getMarkdownFiles();
+    const files = this.getTargetFiles();
 
     for (const file of files) {
       const cache = this.app.metadataCache.getFileCache(file);
@@ -49,11 +103,11 @@ export class VaultScanner {
     );
   }
 
-  /** Scan the vault for all empty property occurrences */
+  /** Scan the target files for all empty property occurrences */
   scanEmptyProperties(): EmptyScanResult {
     const byFile = new Map<string, { file: TFile; emptyProps: string[] }>();
     let totalCount = 0;
-    const files = this.app.vault.getMarkdownFiles();
+    const files = this.getTargetFiles();
 
     for (const file of files) {
       const cache = this.app.metadataCache.getFileCache(file);
@@ -77,14 +131,14 @@ export class VaultScanner {
     return { byFile, totalCount };
   }
 
-  /** Analyze a specific property across all files */
+  /** Analyze a specific property across target files */
   analyzeProperty(propertyName: string): PropertyAnalysis {
     const occurrences: PropertyOccurrence[] = [];
     const singleValueFiles: PropertyOccurrence[] = [];
     const multiValueFiles: PropertyOccurrence[] = [];
     const emptyFiles: PropertyOccurrence[] = [];
     const textFiles: PropertyOccurrence[] = [];
-    const files = this.app.vault.getMarkdownFiles();
+    const files = this.getTargetFiles();
 
     for (const file of files) {
       const cache = this.app.metadataCache.getFileCache(file);

@@ -22,6 +22,11 @@ export class PropertiesToolkitSettingTab extends PluginSettingTab {
 
 		containerEl.createEl('h2', { text: this.settingsManager.languageManager.setting('title') });
 
+		// ========================================
+		// Section: General Settings
+		// ========================================
+		containerEl.createEl('h3', { text: this.settingsManager.languageManager.setting('section-general') });
+
 		// Paramètre de langue
 		new Setting(containerEl)
 			.setName(this.settingsManager.languageManager.setting('language'))
@@ -40,20 +45,45 @@ export class PropertiesToolkitSettingTab extends PluginSettingTab {
 					});
 			});
 
-		// Section: Transformation Property ↔ Tag
-		containerEl.createEl('h3', { text: this.settingsManager.languageManager.setting('section-transformer') });
-
-		// Dossier cible
+		// Dossier cible (en haut pour toutes les opérations)
 		new Setting(containerEl)
 			.setName(this.settingsManager.languageManager.setting('target-folder'))
 			.setDesc(this.settingsManager.languageManager.setting('target-folder-desc'))
 			.addText(text => text
-				.setPlaceholder('chemin/vers/dossier')
+				.setPlaceholder('path/to/folder')
 				.setValue(this.settingsManager.settings.targetFolder)
 				.onChange(async (value) => {
 					this.settingsManager.settings.targetFolder = value;
 					await this.settingsManager.saveSettings();
 				}));
+
+		// Nom du fichier d'analyse
+		new Setting(containerEl)
+			.setName(this.settingsManager.languageManager.setting('analysis-filename'))
+			.setDesc(this.settingsManager.languageManager.setting('analysis-filename-desc'))
+			.addText(text => text
+				.setPlaceholder('properties-analysis')
+				.setValue(this.settingsManager.settings.analysisFileName)
+				.onChange(async (value) => {
+					this.settingsManager.settings.analysisFileName = value || 'properties-analysis';
+					await this.settingsManager.saveSettings();
+				}));
+
+		// Activer le logging détaillé
+		new Setting(containerEl)
+			.setName(this.settingsManager.languageManager.setting('enable-logging'))
+			.setDesc(this.settingsManager.languageManager.setting('enable-logging-desc'))
+			.addToggle(toggle => toggle
+				.setValue(this.settingsManager.settings.enableLogging)
+				.onChange(async (value) => {
+					this.settingsManager.settings.enableLogging = value;
+					await this.settingsManager.saveSettings();
+				}));
+
+		// ========================================
+		// Section: Transformation Property ↔ Tag
+		// ========================================
+		containerEl.createEl('h3', { text: this.settingsManager.languageManager.setting('section-transformer') });
 
 		// Liste de propriétés
 		new Setting(containerEl)
@@ -135,17 +165,6 @@ export class PropertiesToolkitSettingTab extends PluginSettingTab {
 				.setValue(this.settingsManager.settings.analysisType)
 				.onChange(async (value) => {
 					this.settingsManager.settings.analysisType = value as 'by-property' | 'by-file';
-					await this.settingsManager.saveSettings();
-				}));
-
-		// Activer le logging détaillé
-		new Setting(containerEl)
-			.setName(this.settingsManager.languageManager.setting('enable-logging'))
-			.setDesc(this.settingsManager.languageManager.setting('enable-logging-desc'))
-			.addToggle(toggle => toggle
-				.setValue(this.settingsManager.settings.enableLogging)
-				.onChange(async (value) => {
-					this.settingsManager.settings.enableLogging = value;
 					await this.settingsManager.saveSettings();
 				}));
 	}

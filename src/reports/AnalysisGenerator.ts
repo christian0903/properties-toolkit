@@ -35,8 +35,8 @@ export class AnalysisGenerator {
 		}
 
 		const analysisDate = new Date().toISOString().split('T')[0];
-		const analysisTypeLabel = this.settings.analysisType === 'by-property' ? 'Par_Proprietes' : 'Par_Notes';
-		const analysisFileName = 'Analyse_Tags_' + analysisTypeLabel + '_' + analysisDate + '.md';
+		const baseName = this.settings.analysisFileName || 'properties-analysis';
+		const analysisFileName = baseName + '-' + analysisDate + '.md';
 
 		if (this.settings.analysisType === 'by-property') {
 			await this.generatePropertyBasedAnalysis(files, propertyList, analysisFileName);

@@ -8,16 +8,20 @@
     "remove-properties": "Effacer propriétés correspondantes",
     "remove-tags": "Effacer tags correspondants",
     "analyze-property-tags": "Analyser les tags de propriétés",
-    "generate-modification-report": "Générer rapport de modifications"
+    "generate-modification-report": "Générer rapport de modifications",
+    "search-replace-value": "Rechercher et remplacer valeur dans propriété"
   },
   "settings": {
     "title": "Paramètres Properties Toolkit",
+    "section-general": "Paramètres généraux",
     "section-manager": "Gestion des propriétés",
     "section-transformer": "Transformation Propriété ↔ Tag",
     "language": "Langue",
     "language-desc": "Langue de l'interface du plugin",
     "target-folder": "Dossier cible",
-    "target-folder-desc": "Le dossier où appliquer les transformations (vide = racine)",
+    "target-folder-desc": "Le dossier où appliquer toutes les opérations (vide = tout le vault)",
+    "analysis-filename": "Nom du fichier d'analyse",
+    "analysis-filename-desc": "Nom de base du fichier d'analyse (la date sera ajoutée automatiquement)",
     "property-list": "Liste de propriétés",
     "property-list-desc": "Propriétés à transformer (séparées par des virgules)",
     "property-list-placeholder": "statut,type,priorité",

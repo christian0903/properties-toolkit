@@ -1,0 +1,12 @@
+{
+  "language": "en",
+  "targetFolder": "",
+  "propertyList": "statut,type",
+  "overwrite": false,
+  "removeSourceAfterTransform": false,
+  "tagsInYamlZone": false,
+  "tagSearchLocation": "both",
+  "analysisType": "by-property",
+  "enableLogging": false,
+  "appendToExistingProperty": false
+}

@@ -16,6 +16,8 @@ import { PropertyTransformer } from './src/core/PropertyTransformer';
 import { LogGenerator } from './src/reports/LogGenerator';
 import { AnalysisGenerator } from './src/reports/AnalysisGenerator';
 import { PropertiesToolkitSettingTab } from './src/ui/Settings';
+import { SearchReplaceModal } from './src/modals/search-replace-modal';
+import { SearchReplaceExecutor } from './src/converters/search-replace';
 
 export default class PropertiesToolkitPlugin extends Plugin {
 	settings: TransformerSettings;
@@ -61,7 +63,7 @@ export default class PropertiesToolkitPlugin extends Plugin {
 	 */
 	private initializeModules(): void {
 		// Properties Manager modules
-		this.scanner = new VaultScanner(this.app);
+		this.scanner = new VaultScanner(this.app, this.settings);
 		this.registry = new ConverterRegistry();
 
 		// Register converters
@@ -114,6 +116,13 @@ export default class PropertiesToolkitPlugin extends Plugin {
 			id: 'show-doc',
 			name: this.languageManager.command('show-doc'),
 			callback: () => this.showDoc(),
+		});
+
+		// Command: Search and replace value in property
+		this.addCommand({
+			id: 'search-replace-value',
+			name: this.languageManager.command('search-replace-value'),
+			callback: () => this.searchReplaceValue(),
 		});
 
 		// === PROPERTY TRANSFORMER COMMANDS ===
@@ -285,6 +294,24 @@ export default class PropertiesToolkitPlugin extends Plugin {
 		}
 	}
 
+	private searchReplaceValue(): void {
+		new SearchReplaceModal(this.app, this.languageManager, async (params) => {
+			const executor = new SearchReplaceExecutor(this.app, this.languageManager, this.settings);
+			const count = await executor.executeWithPreview(
+				params.propertyName,
+				params.searchValue,
+				params.replaceValue
+			);
+
+			if (count === 0) {
+				const isFr = this.languageManager.getCurrentLanguage() === 'fr';
+				new Notice(isFr
+					? `Aucune correspondance trouvée pour "${params.searchValue}" dans "${params.propertyName}"`
+					: `No match found for "${params.searchValue}" in "${params.propertyName}"`);
+			}
+		}).open();
+	}
+
 	private convertProperty(): void {
 		const properties = this.scanner.getAllProperties();
 
@@ -338,6 +365,9 @@ export default class PropertiesToolkitPlugin extends Plugin {
 	}
 
 	private updateModulesSettings(): void {
+		if (this.scanner) {
+			this.scanner.updateSettings(this.settings);
+		}
 		if (this.fileManager) {
 			this.fileManager.updateSettings(this.settings);
 		}

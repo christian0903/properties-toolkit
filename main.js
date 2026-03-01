@@ -23,7 +23,7 @@ __export(main_exports, {
   default: () => PropertiesToolkitPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian11 = require("obsidian");
+var import_obsidian14 = require("obsidian");
 
 // src/lang/en.json
 var en_default = {
@@ -36,16 +36,20 @@ var en_default = {
     "remove-properties": "Remove corresponding properties",
     "remove-tags": "Remove corresponding tags",
     "analyze-property-tags": "Analyze property tags",
-    "generate-modification-report": "Generate modification report"
+    "generate-modification-report": "Generate modification report",
+    "search-replace-value": "Search and replace value in property"
   },
   settings: {
     title: "Properties Toolkit Settings",
+    "section-general": "General Settings",
     "section-manager": "Property Management",
     "section-transformer": "Property \u2194 Tag Transformation",
     language: "Language",
     "language-desc": "Plugin interface language",
     "target-folder": "Target folder",
-    "target-folder-desc": "Folder where transformations will be applied (empty = root)",
+    "target-folder-desc": "Folder where all operations will be applied (empty = entire vault)",
+    "analysis-filename": "Analysis file name",
+    "analysis-filename-desc": "Base name for the analysis file (date will be appended automatically)",
     "property-list": "Property list",
     "property-list-desc": "Properties to transform (comma separated)",
     "property-list-placeholder": "status,type,priority",
@@ -172,16 +176,20 @@ var fr_default = {
     "remove-properties": "Effacer propri\xE9t\xE9s correspondantes",
     "remove-tags": "Effacer tags correspondants",
     "analyze-property-tags": "Analyser les tags de propri\xE9t\xE9s",
-    "generate-modification-report": "G\xE9n\xE9rer rapport de modifications"
+    "generate-modification-report": "G\xE9n\xE9rer rapport de modifications",
+    "search-replace-value": "Rechercher et remplacer valeur dans propri\xE9t\xE9"
   },
   settings: {
     title: "Param\xE8tres Properties Toolkit",
+    "section-general": "Param\xE8tres g\xE9n\xE9raux",
     "section-manager": "Gestion des propri\xE9t\xE9s",
     "section-transformer": "Transformation Propri\xE9t\xE9 \u2194 Tag",
     language: "Langue",
     "language-desc": "Langue de l'interface du plugin",
     "target-folder": "Dossier cible",
-    "target-folder-desc": "Le dossier o\xF9 appliquer les transformations (vide = racine)",
+    "target-folder-desc": "Le dossier o\xF9 appliquer toutes les op\xE9rations (vide = tout le vault)",
+    "analysis-filename": "Nom du fichier d'analyse",
+    "analysis-filename-desc": "Nom de base du fichier d'analyse (la date sera ajout\xE9e automatiquement)",
     "property-list": "Liste de propri\xE9t\xE9s",
     "property-list-desc": "Propri\xE9t\xE9s \xE0 transformer (s\xE9par\xE9es par des virgules)",
     "property-list-placeholder": "statut,type,priorit\xE9",
@@ -404,6 +412,7 @@ var LanguageManager = class {
 var DEFAULT_TRANSFORMER_SETTINGS = {
   language: "en",
   targetFolder: "",
+  analysisFileName: "properties-analysis",
   propertyList: "statut,type",
   overwrite: false,
   removeSourceAfterTransform: false,
@@ -415,6 +424,7 @@ var DEFAULT_TRANSFORMER_SETTINGS = {
 };
 
 // src/core/scanner.ts
+var import_obsidian = require("obsidian");
 function isEmpty(value) {
   if (value === null || value === void 0)
     return true;
@@ -432,13 +442,52 @@ function getValueType(value) {
   return typeof value;
 }
 var VaultScanner = class {
-  constructor(app) {
+  constructor(app, settings) {
     this.app = app;
+    this.settings = settings;
   }
-  /** Collect all unique property names across the vault with metadata */
+  /**
+   * Update settings reference
+   */
+  updateSettings(settings) {
+    this.settings = settings;
+  }
+  /**
+   * Get target files based on targetFolder setting
+   */
+  getTargetFiles() {
+    const folderPath = this.settings.targetFolder.trim();
+    if (!folderPath) {
+      return this.app.vault.getMarkdownFiles();
+    }
+    const normalizedPath = (0, import_obsidian.normalizePath)(folderPath);
+    const folder = this.app.vault.getAbstractFileByPath(normalizedPath);
+    if (!folder) {
+      return [];
+    }
+    if (folder instanceof import_obsidian.TFile) {
+      return folder.extension === "md" ? [folder] : [];
+    }
+    if (folder instanceof import_obsidian.TFolder) {
+      const getAllFiles = (currentFolder) => {
+        const result = [];
+        for (const child of currentFolder.children) {
+          if (child instanceof import_obsidian.TFile && child.extension === "md") {
+            result.push(child);
+          } else if (child instanceof import_obsidian.TFolder) {
+            result.push(...getAllFiles(child));
+          }
+        }
+        return result;
+      };
+      return getAllFiles(folder);
+    }
+    return [];
+  }
+  /** Collect all unique property names across the target files with metadata */
   getAllProperties() {
     const map = /* @__PURE__ */ new Map();
-    const files = this.app.vault.getMarkdownFiles();
+    const files = this.getTargetFiles();
     for (const file of files) {
       const cache = this.app.metadataCache.getFileCache(file);
       const fm = cache == null ? void 0 : cache.frontmatter;
@@ -464,11 +513,11 @@ var VaultScanner = class {
       (a, b) => a.name.localeCompare(b.name)
     );
   }
-  /** Scan the vault for all empty property occurrences */
+  /** Scan the target files for all empty property occurrences */
   scanEmptyProperties() {
     const byFile = /* @__PURE__ */ new Map();
     let totalCount = 0;
-    const files = this.app.vault.getMarkdownFiles();
+    const files = this.getTargetFiles();
     for (const file of files) {
       const cache = this.app.metadataCache.getFileCache(file);
       const fm = cache == null ? void 0 : cache.frontmatter;
@@ -489,14 +538,14 @@ var VaultScanner = class {
     }
     return { byFile, totalCount };
   }
-  /** Analyze a specific property across all files */
+  /** Analyze a specific property across target files */
   analyzeProperty(propertyName) {
     const occurrences = [];
     const singleValueFiles = [];
     const multiValueFiles = [];
     const emptyFiles = [];
     const textFiles = [];
-    const files = this.app.vault.getMarkdownFiles();
+    const files = this.getTargetFiles();
     for (const file of files) {
       const cache = this.app.metadataCache.getFileCache(file);
       const fm = cache == null ? void 0 : cache.frontmatter;
@@ -545,8 +594,8 @@ var ConverterRegistry = class {
 };
 
 // src/modals/preview-modal.ts
-var import_obsidian = require("obsidian");
-var PreviewModal = class extends import_obsidian.Modal {
+var import_obsidian2 = require("obsidian");
+var PreviewModal = class extends import_obsidian2.Modal {
   constructor(app, config) {
     super(app);
     this.config = config;
@@ -590,8 +639,8 @@ var PreviewModal = class extends import_obsidian.Modal {
 };
 
 // src/modals/progress-modal.ts
-var import_obsidian2 = require("obsidian");
-var ProgressModal = class extends import_obsidian2.Modal {
+var import_obsidian3 = require("obsidian");
+var ProgressModal = class extends import_obsidian3.Modal {
   constructor(app, title) {
     super(app);
     this.title = title;
@@ -630,8 +679,8 @@ var ProgressModal = class extends import_obsidian2.Modal {
 };
 
 // src/modals/multi-value-choice-modal.ts
-var import_obsidian3 = require("obsidian");
-var MultiValueChoiceModal = class extends import_obsidian3.Modal {
+var import_obsidian4 = require("obsidian");
+var MultiValueChoiceModal = class extends import_obsidian4.Modal {
   constructor(app, propertyName, multiValueFiles, onConfirm) {
     super(app);
     this.choices = /* @__PURE__ */ new Map();
@@ -877,8 +926,8 @@ var DeleteEmptyConverter = class {
 };
 
 // src/modals/property-selector.ts
-var import_obsidian4 = require("obsidian");
-var PropertySelectorModal = class extends import_obsidian4.FuzzySuggestModal {
+var import_obsidian5 = require("obsidian");
+var PropertySelectorModal = class extends import_obsidian5.FuzzySuggestModal {
   constructor(app, properties, onChoose) {
     super(app);
     this.properties = properties;
@@ -897,8 +946,8 @@ var PropertySelectorModal = class extends import_obsidian4.FuzzySuggestModal {
 };
 
 // src/modals/operation-selector.ts
-var import_obsidian5 = require("obsidian");
-var OperationSelectorModal = class extends import_obsidian5.SuggestModal {
+var import_obsidian6 = require("obsidian");
+var OperationSelectorModal = class extends import_obsidian6.SuggestModal {
   constructor(app, converters, onChoose) {
     super(app);
     this.converters = converters;
@@ -1117,7 +1166,7 @@ var FrontmatterParser = class {
 };
 
 // src/core/FileManager.ts
-var import_obsidian6 = require("obsidian");
+var import_obsidian7 = require("obsidian");
 var FileManager = class {
   constructor(app, settings, languageManager) {
     this.app = app;
@@ -1132,22 +1181,22 @@ var FileManager = class {
     if (!folderPath) {
       return this.app.vault.getMarkdownFiles();
     }
-    const normalizedPath = (0, import_obsidian6.normalizePath)(folderPath);
+    const normalizedPath = (0, import_obsidian7.normalizePath)(folderPath);
     const folder = this.app.vault.getAbstractFileByPath(normalizedPath);
     if (!folder) {
-      new import_obsidian6.Notice(this.languageManager.notice("folder-not-found", { folder: folderPath }));
+      new import_obsidian7.Notice(this.languageManager.notice("folder-not-found", { folder: folderPath }));
       return [];
     }
-    if (folder instanceof import_obsidian6.TFile) {
+    if (folder instanceof import_obsidian7.TFile) {
       return folder.extension === "md" ? [folder] : [];
     }
-    if (folder instanceof import_obsidian6.TFolder) {
+    if (folder instanceof import_obsidian7.TFolder) {
       const getAllFiles = (currentFolder) => {
         const result = [];
         for (const child of currentFolder.children) {
-          if (child instanceof import_obsidian6.TFile && child.extension === "md") {
+          if (child instanceof import_obsidian7.TFile && child.extension === "md") {
             result.push(child);
-          } else if (child instanceof import_obsidian6.TFolder) {
+          } else if (child instanceof import_obsidian7.TFolder) {
             result.push(...getAllFiles(child));
           }
         }
@@ -1179,9 +1228,9 @@ var FileManager = class {
    * Crée ou écrase un fichier
    */
   async createFile(path, content) {
-    const normalizedPath = (0, import_obsidian6.normalizePath)(path);
+    const normalizedPath = (0, import_obsidian7.normalizePath)(path);
     const existingFile = this.app.vault.getAbstractFileByPath(normalizedPath);
-    if (existingFile instanceof import_obsidian6.TFile) {
+    if (existingFile instanceof import_obsidian7.TFile) {
       await this.app.vault.modify(existingFile, content);
     } else {
       await this.app.vault.create(normalizedPath, content);
@@ -1196,7 +1245,7 @@ var FileManager = class {
 };
 
 // src/core/PropertyTransformer.ts
-var import_obsidian7 = require("obsidian");
+var import_obsidian8 = require("obsidian");
 var PropertyTransformer = class {
   constructor(settings, languageManager, frontmatterParser, fileManager) {
     this.modificationLogs = [];
@@ -1279,7 +1328,7 @@ var PropertyTransformer = class {
         }
       }
     }
-    new import_obsidian7.Notice(modifiedCount + " " + this.languageManager.notice("files-modified"));
+    new import_obsidian8.Notice(modifiedCount + " " + this.languageManager.notice("files-modified"));
     return this.modificationLogs;
   }
   /**
@@ -1385,7 +1434,7 @@ var PropertyTransformer = class {
         }
       }
     }
-    new import_obsidian7.Notice(modifiedCount + " " + this.languageManager.notice("files-modified"));
+    new import_obsidian8.Notice(modifiedCount + " " + this.languageManager.notice("files-modified"));
     return this.modificationLogs;
   }
   /**
@@ -1437,7 +1486,7 @@ var PropertyTransformer = class {
         }
       }
     }
-    new import_obsidian7.Notice(modifiedCount + " " + this.languageManager.notice("files-modified"));
+    new import_obsidian8.Notice(modifiedCount + " " + this.languageManager.notice("files-modified"));
     return this.modificationLogs;
   }
   /**
@@ -1500,7 +1549,7 @@ var PropertyTransformer = class {
         }
       }
     }
-    new import_obsidian7.Notice(modifiedCount + " " + this.languageManager.notice("files-modified"));
+    new import_obsidian8.Notice(modifiedCount + " " + this.languageManager.notice("files-modified"));
     return this.modificationLogs;
   }
   /**
@@ -1525,7 +1574,7 @@ var PropertyTransformer = class {
 };
 
 // src/reports/LogGenerator.ts
-var import_obsidian8 = require("obsidian");
+var import_obsidian9 = require("obsidian");
 var LogGenerator = class {
   constructor(settings, languageManager, fileManager) {
     this.settings = settings;
@@ -1636,9 +1685,9 @@ var LogGenerator = class {
     logContent += "*" + this.languageManager.log("generated-by") + "*\n";
     try {
       await this.fileManager.createFile(logFileName, logContent);
-      new import_obsidian8.Notice(this.languageManager.notice("log-created", { filename: logFileName }));
+      new import_obsidian9.Notice(this.languageManager.notice("log-created", { filename: logFileName }));
     } catch (error) {
-      new import_obsidian8.Notice(this.languageManager.notice("log-error"));
+      new import_obsidian9.Notice(this.languageManager.notice("log-error"));
       console.error(error);
     }
   }
@@ -1647,7 +1696,7 @@ var LogGenerator = class {
    */
   async generateModificationReport(modificationLogs) {
     if (modificationLogs.length === 0) {
-      new import_obsidian8.Notice(this.languageManager.notice("no-modifications"));
+      new import_obsidian9.Notice(this.languageManager.notice("no-modifications"));
       return;
     }
     const reportDate = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
@@ -1679,9 +1728,9 @@ var LogGenerator = class {
     }
     try {
       await this.fileManager.createFile(reportFileName, reportContent);
-      new import_obsidian8.Notice(this.languageManager.notice("report-generated", { filename: reportFileName }));
+      new import_obsidian9.Notice(this.languageManager.notice("report-generated", { filename: reportFileName }));
     } catch (error) {
-      new import_obsidian8.Notice(this.languageManager.notice("report-error"));
+      new import_obsidian9.Notice(this.languageManager.notice("report-error"));
       console.error(error);
     }
   }
@@ -1694,7 +1743,7 @@ var LogGenerator = class {
 };
 
 // src/reports/AnalysisGenerator.ts
-var import_obsidian9 = require("obsidian");
+var import_obsidian10 = require("obsidian");
 var AnalysisGenerator = class {
   constructor(settings, languageManager, frontmatterParser, fileManager) {
     this.settings = settings;
@@ -1709,12 +1758,12 @@ var AnalysisGenerator = class {
     const files = await this.fileManager.getTargetFiles();
     const propertyList = this.fileManager.getPropertyList();
     if (propertyList.length === 0) {
-      new import_obsidian9.Notice(this.languageManager.notice("no-properties"));
+      new import_obsidian10.Notice(this.languageManager.notice("no-properties"));
       return;
     }
     const analysisDate = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
-    const analysisTypeLabel = this.settings.analysisType === "by-property" ? "Par_Proprietes" : "Par_Notes";
-    const analysisFileName = "Analyse_Tags_" + analysisTypeLabel + "_" + analysisDate + ".md";
+    const baseName = this.settings.analysisFileName || "properties-analysis";
+    const analysisFileName = baseName + "-" + analysisDate + ".md";
     if (this.settings.analysisType === "by-property") {
       await this.generatePropertyBasedAnalysis(files, propertyList, analysisFileName);
     } else {
@@ -1803,12 +1852,12 @@ var AnalysisGenerator = class {
     }
     try {
       await this.fileManager.createFile(analysisFileName, analysisContent);
-      new import_obsidian9.Notice(this.languageManager.notice("analysis-generated", {
+      new import_obsidian10.Notice(this.languageManager.notice("analysis-generated", {
         type: this.languageManager.analysis("by-property-title"),
         filename: analysisFileName
       }));
     } catch (error) {
-      new import_obsidian9.Notice(this.languageManager.notice("analysis-error"));
+      new import_obsidian10.Notice(this.languageManager.notice("analysis-error"));
       console.error(error);
     }
   }
@@ -1980,12 +2029,12 @@ var AnalysisGenerator = class {
     }
     try {
       await this.fileManager.createFile(analysisFileName, analysisContent);
-      new import_obsidian9.Notice(this.languageManager.notice("analysis-generated", {
+      new import_obsidian10.Notice(this.languageManager.notice("analysis-generated", {
         type: this.languageManager.analysis("by-file-title"),
         filename: analysisFileName
       }));
     } catch (error) {
-      new import_obsidian9.Notice(this.languageManager.notice("analysis-error"));
+      new import_obsidian10.Notice(this.languageManager.notice("analysis-error"));
       console.error(error);
     }
   }
@@ -1998,8 +2047,8 @@ var AnalysisGenerator = class {
 };
 
 // src/ui/Settings.ts
-var import_obsidian10 = require("obsidian");
-var PropertiesToolkitSettingTab = class extends import_obsidian10.PluginSettingTab {
+var import_obsidian11 = require("obsidian");
+var PropertiesToolkitSettingTab = class extends import_obsidian11.PluginSettingTab {
   constructor(app, settingsManager) {
     super(app, settingsManager);
     this.settingsManager = settingsManager;
@@ -2008,7 +2057,8 @@ var PropertiesToolkitSettingTab = class extends import_obsidian10.PluginSettingT
     const { containerEl } = this;
     containerEl.empty();
     containerEl.createEl("h2", { text: this.settingsManager.languageManager.setting("title") });
-    new import_obsidian10.Setting(containerEl).setName(this.settingsManager.languageManager.setting("language")).setDesc(this.settingsManager.languageManager.setting("language-desc")).addDropdown((dropdown) => {
+    containerEl.createEl("h3", { text: this.settingsManager.languageManager.setting("section-general") });
+    new import_obsidian11.Setting(containerEl).setName(this.settingsManager.languageManager.setting("language")).setDesc(this.settingsManager.languageManager.setting("language-desc")).addDropdown((dropdown) => {
       const languages = this.settingsManager.languageManager.getAvailableLanguages();
       languages.forEach((lang) => {
         dropdown.addOption(lang.value, lang.label);
@@ -2019,48 +2069,249 @@ var PropertiesToolkitSettingTab = class extends import_obsidian10.PluginSettingT
         this.display();
       });
     });
-    containerEl.createEl("h3", { text: this.settingsManager.languageManager.setting("section-transformer") });
-    new import_obsidian10.Setting(containerEl).setName(this.settingsManager.languageManager.setting("target-folder")).setDesc(this.settingsManager.languageManager.setting("target-folder-desc")).addText((text) => text.setPlaceholder("chemin/vers/dossier").setValue(this.settingsManager.settings.targetFolder).onChange(async (value) => {
+    new import_obsidian11.Setting(containerEl).setName(this.settingsManager.languageManager.setting("target-folder")).setDesc(this.settingsManager.languageManager.setting("target-folder-desc")).addText((text) => text.setPlaceholder("path/to/folder").setValue(this.settingsManager.settings.targetFolder).onChange(async (value) => {
       this.settingsManager.settings.targetFolder = value;
       await this.settingsManager.saveSettings();
     }));
-    new import_obsidian10.Setting(containerEl).setName(this.settingsManager.languageManager.setting("property-list")).setDesc(this.settingsManager.languageManager.setting("property-list-desc")).addText((text) => text.setPlaceholder(this.settingsManager.languageManager.setting("property-list-placeholder")).setValue(this.settingsManager.settings.propertyList).onChange(async (value) => {
+    new import_obsidian11.Setting(containerEl).setName(this.settingsManager.languageManager.setting("analysis-filename")).setDesc(this.settingsManager.languageManager.setting("analysis-filename-desc")).addText((text) => text.setPlaceholder("properties-analysis").setValue(this.settingsManager.settings.analysisFileName).onChange(async (value) => {
+      this.settingsManager.settings.analysisFileName = value || "properties-analysis";
+      await this.settingsManager.saveSettings();
+    }));
+    new import_obsidian11.Setting(containerEl).setName(this.settingsManager.languageManager.setting("enable-logging")).setDesc(this.settingsManager.languageManager.setting("enable-logging-desc")).addToggle((toggle) => toggle.setValue(this.settingsManager.settings.enableLogging).onChange(async (value) => {
+      this.settingsManager.settings.enableLogging = value;
+      await this.settingsManager.saveSettings();
+    }));
+    containerEl.createEl("h3", { text: this.settingsManager.languageManager.setting("section-transformer") });
+    new import_obsidian11.Setting(containerEl).setName(this.settingsManager.languageManager.setting("property-list")).setDesc(this.settingsManager.languageManager.setting("property-list-desc")).addText((text) => text.setPlaceholder(this.settingsManager.languageManager.setting("property-list-placeholder")).setValue(this.settingsManager.settings.propertyList).onChange(async (value) => {
       this.settingsManager.settings.propertyList = value;
       await this.settingsManager.saveSettings();
     }));
-    new import_obsidian10.Setting(containerEl).setName(this.settingsManager.languageManager.setting("overwrite")).setDesc(this.settingsManager.languageManager.setting("overwrite-desc")).addToggle((toggle) => toggle.setValue(this.settingsManager.settings.overwrite).onChange(async (value) => {
+    new import_obsidian11.Setting(containerEl).setName(this.settingsManager.languageManager.setting("overwrite")).setDesc(this.settingsManager.languageManager.setting("overwrite-desc")).addToggle((toggle) => toggle.setValue(this.settingsManager.settings.overwrite).onChange(async (value) => {
       this.settingsManager.settings.overwrite = value;
       await this.settingsManager.saveSettings();
     }));
-    new import_obsidian10.Setting(containerEl).setName(this.settingsManager.languageManager.setting("append-to-existing")).setDesc(this.settingsManager.languageManager.setting("append-to-existing-desc")).addToggle((toggle) => toggle.setValue(this.settingsManager.settings.appendToExistingProperty).onChange(async (value) => {
+    new import_obsidian11.Setting(containerEl).setName(this.settingsManager.languageManager.setting("append-to-existing")).setDesc(this.settingsManager.languageManager.setting("append-to-existing-desc")).addToggle((toggle) => toggle.setValue(this.settingsManager.settings.appendToExistingProperty).onChange(async (value) => {
       this.settingsManager.settings.appendToExistingProperty = value;
       await this.settingsManager.saveSettings();
     }));
-    new import_obsidian10.Setting(containerEl).setName(this.settingsManager.languageManager.setting("remove-source")).setDesc(this.settingsManager.languageManager.setting("remove-source-desc")).addToggle((toggle) => toggle.setValue(this.settingsManager.settings.removeSourceAfterTransform).onChange(async (value) => {
+    new import_obsidian11.Setting(containerEl).setName(this.settingsManager.languageManager.setting("remove-source")).setDesc(this.settingsManager.languageManager.setting("remove-source-desc")).addToggle((toggle) => toggle.setValue(this.settingsManager.settings.removeSourceAfterTransform).onChange(async (value) => {
       this.settingsManager.settings.removeSourceAfterTransform = value;
       await this.settingsManager.saveSettings();
     }));
-    new import_obsidian10.Setting(containerEl).setName(this.settingsManager.languageManager.setting("tags-in-yaml")).setDesc(this.settingsManager.languageManager.setting("tags-in-yaml-desc")).addToggle((toggle) => toggle.setValue(this.settingsManager.settings.tagsInYamlZone).onChange(async (value) => {
+    new import_obsidian11.Setting(containerEl).setName(this.settingsManager.languageManager.setting("tags-in-yaml")).setDesc(this.settingsManager.languageManager.setting("tags-in-yaml-desc")).addToggle((toggle) => toggle.setValue(this.settingsManager.settings.tagsInYamlZone).onChange(async (value) => {
       this.settingsManager.settings.tagsInYamlZone = value;
       await this.settingsManager.saveSettings();
     }));
-    new import_obsidian10.Setting(containerEl).setName(this.settingsManager.languageManager.setting("tag-search-location")).setDesc(this.settingsManager.languageManager.setting("tag-search-location-desc")).addDropdown((dropdown) => dropdown.addOption("yaml", this.settingsManager.languageManager.setting("tag-search-yaml")).addOption("content", this.settingsManager.languageManager.setting("tag-search-content")).addOption("both", this.settingsManager.languageManager.setting("tag-search-both")).setValue(this.settingsManager.settings.tagSearchLocation).onChange(async (value) => {
+    new import_obsidian11.Setting(containerEl).setName(this.settingsManager.languageManager.setting("tag-search-location")).setDesc(this.settingsManager.languageManager.setting("tag-search-location-desc")).addDropdown((dropdown) => dropdown.addOption("yaml", this.settingsManager.languageManager.setting("tag-search-yaml")).addOption("content", this.settingsManager.languageManager.setting("tag-search-content")).addOption("both", this.settingsManager.languageManager.setting("tag-search-both")).setValue(this.settingsManager.settings.tagSearchLocation).onChange(async (value) => {
       this.settingsManager.settings.tagSearchLocation = value;
       await this.settingsManager.saveSettings();
     }));
-    new import_obsidian10.Setting(containerEl).setName(this.settingsManager.languageManager.setting("analysis-type")).setDesc(this.settingsManager.languageManager.setting("analysis-type-desc")).addDropdown((dropdown) => dropdown.addOption("by-property", this.settingsManager.languageManager.setting("analysis-by-property")).addOption("by-file", this.settingsManager.languageManager.setting("analysis-by-file")).setValue(this.settingsManager.settings.analysisType).onChange(async (value) => {
+    new import_obsidian11.Setting(containerEl).setName(this.settingsManager.languageManager.setting("analysis-type")).setDesc(this.settingsManager.languageManager.setting("analysis-type-desc")).addDropdown((dropdown) => dropdown.addOption("by-property", this.settingsManager.languageManager.setting("analysis-by-property")).addOption("by-file", this.settingsManager.languageManager.setting("analysis-by-file")).setValue(this.settingsManager.settings.analysisType).onChange(async (value) => {
       this.settingsManager.settings.analysisType = value;
-      await this.settingsManager.saveSettings();
-    }));
-    new import_obsidian10.Setting(containerEl).setName(this.settingsManager.languageManager.setting("enable-logging")).setDesc(this.settingsManager.languageManager.setting("enable-logging-desc")).addToggle((toggle) => toggle.setValue(this.settingsManager.settings.enableLogging).onChange(async (value) => {
-      this.settingsManager.settings.enableLogging = value;
       await this.settingsManager.saveSettings();
     }));
   }
 };
 
+// src/modals/search-replace-modal.ts
+var import_obsidian12 = require("obsidian");
+var SearchReplaceModal = class extends import_obsidian12.Modal {
+  constructor(app, languageManager, onSubmit) {
+    super(app);
+    this.params = {
+      propertyName: "",
+      searchValue: "",
+      replaceValue: ""
+    };
+    this.languageManager = languageManager;
+    this.onSubmit = onSubmit;
+  }
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.empty();
+    contentEl.addClass("pt-modal");
+    const title = this.languageManager.getCurrentLanguage() === "fr" ? "Rechercher et remplacer une valeur" : "Search and replace value";
+    contentEl.createEl("h2", { text: title });
+    new import_obsidian12.Setting(contentEl).setName(this.languageManager.getCurrentLanguage() === "fr" ? "Nom de la propri\xE9t\xE9" : "Property name").setDesc(this.languageManager.getCurrentLanguage() === "fr" ? "La propri\xE9t\xE9 dans laquelle chercher" : "The property to search in").addText((text) => text.setPlaceholder("status, type, category...").onChange((value) => {
+      this.params.propertyName = value.trim();
+    }));
+    new import_obsidian12.Setting(contentEl).setName(this.languageManager.getCurrentLanguage() === "fr" ? "Valeur \xE0 chercher" : "Search value").setDesc(this.languageManager.getCurrentLanguage() === "fr" ? "La valeur exacte \xE0 remplacer" : "The exact value to replace").addText((text) => text.setPlaceholder(this.languageManager.getCurrentLanguage() === "fr" ? "ancienne valeur" : "old value").onChange((value) => {
+      this.params.searchValue = value;
+    }));
+    new import_obsidian12.Setting(contentEl).setName(this.languageManager.getCurrentLanguage() === "fr" ? "Nouvelle valeur" : "Replace value").setDesc(this.languageManager.getCurrentLanguage() === "fr" ? "La nouvelle valeur (vide = supprimer)" : "The new value (empty = delete)").addText((text) => text.setPlaceholder(this.languageManager.getCurrentLanguage() === "fr" ? "nouvelle valeur" : "new value").onChange((value) => {
+      this.params.replaceValue = value;
+    }));
+    const buttonRow = contentEl.createEl("div", { cls: "pt-button-row" });
+    const cancelBtn = buttonRow.createEl("button", {
+      text: this.languageManager.getCurrentLanguage() === "fr" ? "Annuler" : "Cancel"
+    });
+    cancelBtn.addEventListener("click", () => this.close());
+    const submitBtn = buttonRow.createEl("button", {
+      text: this.languageManager.getCurrentLanguage() === "fr" ? "Rechercher" : "Search",
+      cls: "mod-cta"
+    });
+    submitBtn.addEventListener("click", () => {
+      if (!this.params.propertyName) {
+        return;
+      }
+      if (!this.params.searchValue) {
+        return;
+      }
+      this.close();
+      this.onSubmit(this.params);
+    });
+  }
+  onClose() {
+    this.contentEl.empty();
+  }
+};
+
+// src/converters/search-replace.ts
+var import_obsidian13 = require("obsidian");
+var SearchReplaceExecutor = class {
+  constructor(app, languageManager, settings) {
+    this.app = app;
+    this.languageManager = languageManager;
+    this.settings = settings;
+  }
+  /**
+   * Get target files based on targetFolder setting
+   */
+  getTargetFiles() {
+    const folderPath = this.settings.targetFolder.trim();
+    if (!folderPath) {
+      return this.app.vault.getMarkdownFiles();
+    }
+    const normalizedPath = (0, import_obsidian13.normalizePath)(folderPath);
+    const folder = this.app.vault.getAbstractFileByPath(normalizedPath);
+    if (!folder) {
+      return [];
+    }
+    if (folder instanceof import_obsidian13.TFile) {
+      return folder.extension === "md" ? [folder] : [];
+    }
+    if (folder instanceof import_obsidian13.TFolder) {
+      const getAllFiles = (currentFolder) => {
+        const result = [];
+        for (const child of currentFolder.children) {
+          if (child instanceof import_obsidian13.TFile && child.extension === "md") {
+            result.push(child);
+          } else if (child instanceof import_obsidian13.TFolder) {
+            result.push(...getAllFiles(child));
+          }
+        }
+        return result;
+      };
+      return getAllFiles(folder);
+    }
+    return [];
+  }
+  /**
+   * Scan vault for files containing the search value in the specified property
+   */
+  scanForMatches(propertyName, searchValue) {
+    const results = [];
+    const files = this.getTargetFiles();
+    for (const file of files) {
+      const cache = this.app.metadataCache.getFileCache(file);
+      const fm = cache == null ? void 0 : cache.frontmatter;
+      if (!fm || !(propertyName in fm))
+        continue;
+      const value = fm[propertyName];
+      if (Array.isArray(value)) {
+        if (value.includes(searchValue)) {
+          const newArray = value.map((v) => v === searchValue ? null : v);
+          results.push({ file, oldValue: value, newValue: newArray });
+        }
+      } else if (value === searchValue) {
+        results.push({ file, oldValue: value, newValue: null });
+      }
+    }
+    return results;
+  }
+  /**
+   * Execute search and replace with preview
+   */
+  async executeWithPreview(propertyName, searchValue, replaceValue) {
+    const matches = this.scanForMatches(propertyName, searchValue);
+    if (matches.length === 0) {
+      return 0;
+    }
+    const isFr = this.languageManager.getCurrentLanguage() === "fr";
+    const items = matches.map((match) => {
+      let detail;
+      if (Array.isArray(match.oldValue)) {
+        const newArr = match.oldValue.map(
+          (v) => v === searchValue ? replaceValue || "\u2205" : v
+        ).filter((v) => v !== "\u2205" || replaceValue);
+        detail = `[${match.oldValue.join(", ")}] \u2192 [${replaceValue ? newArr.join(", ") : newArr.filter((v) => v !== searchValue).join(", ")}]`;
+      } else {
+        detail = `"${searchValue}" \u2192 "${replaceValue || (isFr ? "(supprim\xE9)" : "(deleted)")}"`;
+      }
+      return {
+        filePath: match.file.path,
+        fileName: match.file.basename,
+        detail
+      };
+    });
+    return new Promise((resolve) => {
+      const title = isFr ? `Remplacer "${searchValue}" par "${replaceValue || "(supprimer)"}" dans "${propertyName}"` : `Replace "${searchValue}" with "${replaceValue || "(delete)"}" in "${propertyName}"`;
+      new PreviewModal(this.app, {
+        title,
+        items,
+        confirmLabel: isFr ? `Remplacer dans ${matches.length} fichier(s)` : `Replace in ${matches.length} file(s)`,
+        onConfirm: async () => {
+          const count = await this.executeReplace(propertyName, searchValue, replaceValue, matches);
+          resolve(count);
+        }
+      }).open();
+    });
+  }
+  /**
+   * Execute the actual replacement
+   */
+  async executeReplace(propertyName, searchValue, replaceValue, matches) {
+    const isFr = this.languageManager.getCurrentLanguage() === "fr";
+    const progressTitle = isFr ? `Remplacement de "${searchValue}"...` : `Replacing "${searchValue}"...`;
+    const progress = new ProgressModal(this.app, progressTitle);
+    progress.open();
+    let count = 0;
+    for (const match of matches) {
+      await this.app.fileManager.processFrontMatter(match.file, (fm) => {
+        const currentValue = fm[propertyName];
+        if (Array.isArray(currentValue)) {
+          if (replaceValue) {
+            fm[propertyName] = currentValue.map(
+              (v) => v === searchValue ? replaceValue : v
+            );
+          } else {
+            fm[propertyName] = currentValue.filter((v) => v !== searchValue);
+            if (fm[propertyName].length === 0) {
+              delete fm[propertyName];
+            }
+          }
+        } else {
+          if (replaceValue) {
+            fm[propertyName] = replaceValue;
+          } else {
+            delete fm[propertyName];
+          }
+        }
+      });
+      count++;
+      progress.setProgress(count, matches.length);
+      if (count % 50 === 0) {
+        await new Promise((r) => setTimeout(r, 0));
+      }
+    }
+    const finishMsg = isFr ? `Termin\xE9 : ${count} fichier(s) modifi\xE9(s).` : `Done: ${count} file(s) modified.`;
+    progress.finish(finishMsg);
+    return count;
+  }
+};
+
 // main.ts
-var PropertiesToolkitPlugin = class extends import_obsidian11.Plugin {
+var PropertiesToolkitPlugin = class extends import_obsidian14.Plugin {
   async onload() {
     await this.loadSettings();
     this.languageManager = new LanguageManager(this.app, this.settings.language);
@@ -2078,7 +2329,7 @@ var PropertiesToolkitPlugin = class extends import_obsidian11.Plugin {
    * Initialize all modules with dependencies
    */
   initializeModules() {
-    this.scanner = new VaultScanner(this.app);
+    this.scanner = new VaultScanner(this.app, this.settings);
     this.registry = new ConverterRegistry();
     this.registry.register(new ListToTextConverter());
     this.registry.register(new TextToListConverter());
@@ -2117,6 +2368,11 @@ var PropertiesToolkitPlugin = class extends import_obsidian11.Plugin {
       id: "show-doc",
       name: this.languageManager.command("show-doc"),
       callback: () => this.showDoc()
+    });
+    this.addCommand({
+      id: "search-replace-value",
+      name: this.languageManager.command("search-replace-value"),
+      callback: () => this.searchReplaceValue()
     });
     this.addCommand({
       id: "transpose-properties-to-tags",
@@ -2188,7 +2444,7 @@ var PropertiesToolkitPlugin = class extends import_obsidian11.Plugin {
   deleteEmptyProperties() {
     const result = this.scanner.scanEmptyProperties();
     if (result.totalCount === 0) {
-      new import_obsidian11.Notice(this.languageManager.notice("no-empty-properties"));
+      new import_obsidian14.Notice(this.languageManager.notice("no-empty-properties"));
       return;
     }
     const items = [];
@@ -2237,41 +2493,55 @@ var PropertiesToolkitPlugin = class extends import_obsidian11.Plugin {
       } catch (e) {
         markdown = await this.app.vault.adapter.read(fallbackPath);
       }
-      const modal = new import_obsidian11.Modal(this.app);
+      const modal = new import_obsidian14.Modal(this.app);
       const title = lang === "fr" ? "Properties Toolkit \u2014 Aide" : "Properties Toolkit \u2014 Help";
       modal.titleEl.setText(title);
       modal.modalEl.style.width = "750px";
       modal.modalEl.style.maxWidth = "90vw";
       modal.modalEl.style.maxHeight = "80vh";
       modal.contentEl.addClass("pt-doc");
-      const component = new import_obsidian11.Component();
+      const component = new import_obsidian14.Component();
       component.load();
-      await import_obsidian11.MarkdownRenderer.render(this.app, markdown, modal.contentEl, "", component);
+      await import_obsidian14.MarkdownRenderer.render(this.app, markdown, modal.contentEl, "", component);
       modal.onClose = () => {
         component.unload();
       };
       modal.open();
     } catch (e) {
-      new import_obsidian11.Notice(lang === "fr" ? "Documentation introuvable : " + docPath : "Documentation not found: " + docPath);
+      new import_obsidian14.Notice(lang === "fr" ? "Documentation introuvable : " + docPath : "Documentation not found: " + docPath);
     }
+  }
+  searchReplaceValue() {
+    new SearchReplaceModal(this.app, this.languageManager, async (params) => {
+      const executor = new SearchReplaceExecutor(this.app, this.languageManager, this.settings);
+      const count = await executor.executeWithPreview(
+        params.propertyName,
+        params.searchValue,
+        params.replaceValue
+      );
+      if (count === 0) {
+        const isFr = this.languageManager.getCurrentLanguage() === "fr";
+        new import_obsidian14.Notice(isFr ? `Aucune correspondance trouv\xE9e pour "${params.searchValue}" dans "${params.propertyName}"` : `No match found for "${params.searchValue}" in "${params.propertyName}"`);
+      }
+    }).open();
   }
   convertProperty() {
     const properties = this.scanner.getAllProperties();
     if (properties.length === 0) {
-      new import_obsidian11.Notice(this.languageManager.notice("no-properties-vault"));
+      new import_obsidian14.Notice(this.languageManager.notice("no-properties-vault"));
       return;
     }
     new PropertySelectorModal(this.app, properties, (propName) => {
       const analysis = this.scanner.analyzeProperty(propName);
       const applicable = this.registry.getAll().filter((c) => c.isApplicable(analysis));
       if (applicable.length === 0) {
-        new import_obsidian11.Notice(`Aucune op\xE9ration applicable pour "${propName}".`);
+        new import_obsidian14.Notice(`Aucune op\xE9ration applicable pour "${propName}".`);
         return;
       }
       new OperationSelectorModal(this.app, applicable, async (converter) => {
         const count = await converter.execute(this.app, analysis);
         if (count >= 0) {
-          new import_obsidian11.Notice(`Op\xE9ration termin\xE9e : ${count} fichier(s) modifi\xE9(s).`);
+          new import_obsidian14.Notice(`Op\xE9ration termin\xE9e : ${count} fichier(s) modifi\xE9(s).`);
         }
       }).open();
     }).open();
@@ -2292,6 +2562,9 @@ var PropertiesToolkitPlugin = class extends import_obsidian11.Plugin {
     this.updateModulesSettings();
   }
   updateModulesSettings() {
+    if (this.scanner) {
+      this.scanner.updateSettings(this.settings);
+    }
     if (this.fileManager) {
       this.fileManager.updateSettings(this.settings);
     }

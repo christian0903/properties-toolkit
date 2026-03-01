@@ -8,16 +8,20 @@
     "remove-properties": "Remove corresponding properties",
     "remove-tags": "Remove corresponding tags",
     "analyze-property-tags": "Analyze property tags",
-    "generate-modification-report": "Generate modification report"
+    "generate-modification-report": "Generate modification report",
+    "search-replace-value": "Search and replace value in property"
   },
   "settings": {
     "title": "Properties Toolkit Settings",
+    "section-general": "General Settings",
     "section-manager": "Property Management",
     "section-transformer": "Property ↔ Tag Transformation",
     "language": "Language",
     "language-desc": "Plugin interface language",
     "target-folder": "Target folder",
-    "target-folder-desc": "Folder where transformations will be applied (empty = root)",
+    "target-folder-desc": "Folder where all operations will be applied (empty = entire vault)",
+    "analysis-filename": "Analysis file name",
+    "analysis-filename-desc": "Base name for the analysis file (date will be appended automatically)",
     "property-list": "Property list",
     "property-list-desc": "Properties to transform (comma separated)",
     "property-list-placeholder": "status,type,priority",
