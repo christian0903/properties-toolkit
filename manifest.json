@@ -3,7 +3,7 @@
   "name": "Properties Toolkit",
   "version": "1.0.0",
   "minAppVersion": "1.4.0",
-  "description": "Managing frontmatter properties with feature as Delete empty properties, convert between list and text types, search and replace values.",
+  "description": "Managing frontmatter properties: delete empty properties, convert between list and text types, search and replace values.",
   "author": "Christian Vanhenten",
   "isDesktopOnly": false
 }
