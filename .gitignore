@@ -1,0 +1,21 @@
+# Node
+node_modules/
+
+# Build (keep main.js for releases)
+*.js.map
+
+# TypeScript
+*.tsbuildinfo
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# NPM
+npm-debug.log*
+
+# Optional: exclude main.js during development
+# main.js

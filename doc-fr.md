@@ -4,7 +4,7 @@
 
 Properties Toolkit est un plugin Obsidian complet pour gérer les propriétés frontmatter. Il combine deux ensembles de fonctionnalités :
 
-1. **Gestion des propriétés** : Supprimer les valeurs vides, convertir entre types liste et texte
+1. **Gestion des propriétés** : Supprimer les valeurs vides, convertir entre types liste et texte, rechercher et remplacer des valeurs
 2. **Transformation Property↔Tag** : Transformation bidirectionnelle entre propriétés YAML et tags
 
 ---
@@ -41,6 +41,23 @@ Permet de convertir le type d'une propriété spécifique dans tous les fichiers
 2. Sélectionner une propriété (recherche fuzzy)
 3. Choisir une opération applicable
 4. Prévisualiser et confirmer
+
+### Rechercher et remplacer valeur dans propriété
+
+Recherche et remplace une valeur spécifique dans une propriété à travers tous les fichiers.
+
+**Workflow :**
+1. Exécuter la commande
+2. Saisir le nom de la propriété (ex: `status`)
+3. Saisir la valeur à chercher (ex: `brouillon`)
+4. Saisir la nouvelle valeur (vide = supprimer la valeur)
+5. Prévisualiser les fichiers affectés
+6. Confirmer pour appliquer
+
+**Notes :**
+- Fonctionne avec les valeurs simples et les tableaux
+- Dans un tableau, seules les valeurs correspondantes sont modifiées
+- Si remplacement vide et tableau devient vide, la propriété est supprimée
 
 ---
 

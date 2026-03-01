@@ -1,8 +1,8 @@
 # Properties Toolkit
 
-A comprehensive Obsidian plugin for managing frontmatter properties. This plugin combines two powerful feature sets:
+A comprehensive Obsidian plugin for managing frontmatter properties. This plugin combines powerful feature sets:
 
-1. **Property Management**: Delete empty properties, convert between list and text types
+1. **Property Management**: Delete empty properties, convert between list and text types, search and replace values
 2. **Property-Tag Transformation**: Bidirectional transformation between YAML properties and tags
 
 ## Features
@@ -12,6 +12,7 @@ A comprehensive Obsidian plugin for managing frontmatter properties. This plugin
 - **Delete empty properties**: Remove all empty/null properties across your vault
 - **Convert List → Text**: Convert array properties to simple text (keep one value)
 - **Convert Text → List**: Convert text properties to arrays
+- **Search and Replace**: Find and replace values within a specific property
 
 ### Property-Tag Transformation
 
@@ -26,6 +27,7 @@ A comprehensive Obsidian plugin for managing frontmatter properties. This plugin
 |---------|-------------|
 | Delete all empty properties (vault) | Remove empty/null properties from all files |
 | Convert property type (vault) | Convert between list and text types |
+| Search and replace value in property | Find and replace values in a property |
 | Transform properties to tags | Convert selected properties to hashtags |
 | Transform tags to properties | Convert matching hashtags to properties |
 | Remove corresponding properties | Delete properties that have matching tags |
@@ -36,11 +38,13 @@ A comprehensive Obsidian plugin for managing frontmatter properties. This plugin
 
 ## Settings
 
-### General
+### General Settings
 - **Language**: Interface language (English/French)
+- **Target folder**: Limit ALL operations to a specific folder (empty = entire vault)
+- **Analysis file name**: Base name for analysis files (date appended automatically)
+- **Enable logging**: Create detailed logs for each operation
 
-### Transformation Settings
-- **Target folder**: Limit operations to a specific folder
+### Property ↔ Tag Transformation
 - **Property list**: Properties to transform (comma-separated)
 - **Overwrite existing**: Replace existing values
 - **Append to existing**: Add new values to existing properties
@@ -48,7 +52,6 @@ A comprehensive Obsidian plugin for managing frontmatter properties. This plugin
 - **Tags in YAML**: Place tags in frontmatter (vs inline)
 - **Tag search location**: Where to look for tags (YAML/content/both)
 - **Analysis type**: Report format (by property or by file)
-- **Enable logging**: Create detailed logs for each operation
 
 ## Usage Examples
 
@@ -64,6 +67,14 @@ A comprehensive Obsidian plugin for managing frontmatter properties. This plugin
 2. Select a property from the fuzzy search
 3. Choose an operation (List→Text or Text→List)
 4. Preview and confirm
+
+### Search and Replace Value
+
+1. Run command: `Ctrl+P` → "Search and replace value in property"
+2. Enter the property name (e.g., `status`)
+3. Enter the value to search (e.g., `draft`)
+4. Enter the replacement value (e.g., `published`, or leave empty to delete)
+5. Preview and confirm
 
 ### Transform Properties to Tags
 
@@ -81,7 +92,7 @@ A comprehensive Obsidian plugin for managing frontmatter properties. This plugin
 
 ### Manual Installation
 
-1. Download `main.js` and `manifest.json` from the latest release
+1. Download `main.js`, `manifest.json`, and `styles.css` from the latest release
 2. Create folder `properties-toolkit` in `.obsidian/plugins/`
 3. Copy files into the folder
 4. Reload Obsidian and enable the plugin
@@ -93,6 +104,10 @@ The plugin supports:
 - French (fr)
 
 Language is auto-detected from Obsidian settings.
+
+## Author
+
+Christian Vanhenten
 
 ## License
 
