@@ -1,5 +1,5 @@
 import { Component, MarkdownRenderer, Notice, Plugin, Modal } from 'obsidian';
-import { LanguageManager, Language } from './src/lang/LanguageManager';
+import { LanguageManager } from './src/lang/LanguageManager';
 import { TransformerSettings, DEFAULT_TRANSFORMER_SETTINGS } from './src/types/transformer-types';
 import { VaultScanner } from './src/core/scanner';
 import { ConverterRegistry } from './src/converters/registry';
@@ -101,28 +101,28 @@ export default class PropertiesToolkitPlugin extends Plugin {
 		this.addCommand({
 			id: 'delete-empty-properties',
 			name: this.languageManager.command('delete-empty-properties'),
-			callback: () => this.deleteEmptyProperties(),
+			callback: () => { this.deleteEmptyProperties(); },
 		});
 
 		// Command: Convert property type
 		this.addCommand({
 			id: 'convert-property',
 			name: this.languageManager.command('convert-property'),
-			callback: () => this.convertProperty(),
+			callback: () => { this.convertProperty(); },
 		});
 
 		// Command: Show documentation
 		this.addCommand({
 			id: 'show-doc',
 			name: this.languageManager.command('show-doc'),
-			callback: () => this.showDoc(),
+			callback: () => { void this.showDoc(); },
 		});
 
 		// Command: Search and replace value in property
 		this.addCommand({
 			id: 'search-replace-value',
 			name: this.languageManager.command('search-replace-value'),
-			callback: () => this.searchReplaceValue(),
+			callback: () => { this.searchReplaceValue(); },
 		});
 
 		// === PROPERTY TRANSFORMER COMMANDS ===
@@ -131,15 +131,17 @@ export default class PropertiesToolkitPlugin extends Plugin {
 		this.addCommand({
 			id: 'transpose-properties-to-tags',
 			name: this.languageManager.command('transpose-properties-to-tags'),
-			callback: async () => {
-				const logs = await this.propertyTransformer.transposePropertiesToTags();
+			callback: () => {
+				void (async () => {
+					const logs = await this.propertyTransformer.transposePropertiesToTags();
 
-				if (this.settings.enableLogging && logs.length > 0) {
-					await this.logGenerator.createDetailedLog(
-						this.languageManager.command('transpose-properties-to-tags'),
-						logs
-					);
-				}
+					if (this.settings.enableLogging && logs.length > 0) {
+						await this.logGenerator.createDetailedLog(
+							this.languageManager.command('transpose-properties-to-tags'),
+							logs
+						);
+					}
+				})();
 			}
 		});
 
@@ -147,15 +149,17 @@ export default class PropertiesToolkitPlugin extends Plugin {
 		this.addCommand({
 			id: 'transpose-tags-to-properties',
 			name: this.languageManager.command('transpose-tags-to-properties'),
-			callback: async () => {
-				const logs = await this.propertyTransformer.transposeTagsToProperties();
+			callback: () => {
+				void (async () => {
+					const logs = await this.propertyTransformer.transposeTagsToProperties();
 
-				if (this.settings.enableLogging && logs.length > 0) {
-					await this.logGenerator.createDetailedLog(
-						this.languageManager.command('transpose-tags-to-properties'),
-						logs
-					);
-				}
+					if (this.settings.enableLogging && logs.length > 0) {
+						await this.logGenerator.createDetailedLog(
+							this.languageManager.command('transpose-tags-to-properties'),
+							logs
+						);
+					}
+				})();
 			}
 		});
 
@@ -163,15 +167,17 @@ export default class PropertiesToolkitPlugin extends Plugin {
 		this.addCommand({
 			id: 'remove-properties',
 			name: this.languageManager.command('remove-properties'),
-			callback: async () => {
-				const logs = await this.propertyTransformer.removeCorrespondingProperties();
+			callback: () => {
+				void (async () => {
+					const logs = await this.propertyTransformer.removeCorrespondingProperties();
 
-				if (this.settings.enableLogging && logs.length > 0) {
-					await this.logGenerator.createDetailedLog(
-						this.languageManager.command('remove-properties'),
-						logs
-					);
-				}
+					if (this.settings.enableLogging && logs.length > 0) {
+						await this.logGenerator.createDetailedLog(
+							this.languageManager.command('remove-properties'),
+							logs
+						);
+					}
+				})();
 			}
 		});
 
@@ -179,15 +185,17 @@ export default class PropertiesToolkitPlugin extends Plugin {
 		this.addCommand({
 			id: 'remove-tags',
 			name: this.languageManager.command('remove-tags'),
-			callback: async () => {
-				const logs = await this.propertyTransformer.removeCorrespondingTags();
+			callback: () => {
+				void (async () => {
+					const logs = await this.propertyTransformer.removeCorrespondingTags();
 
-				if (this.settings.enableLogging && logs.length > 0) {
-					await this.logGenerator.createDetailedLog(
-						this.languageManager.command('remove-tags'),
-						logs
-					);
-				}
+					if (this.settings.enableLogging && logs.length > 0) {
+						await this.logGenerator.createDetailedLog(
+							this.languageManager.command('remove-tags'),
+							logs
+						);
+					}
+				})();
 			}
 		});
 
@@ -195,7 +203,7 @@ export default class PropertiesToolkitPlugin extends Plugin {
 		this.addCommand({
 			id: 'analyze-property-tags',
 			name: this.languageManager.command('analyze-property-tags'),
-			callback: () => this.analysisGenerator.analyzePropertyTags()
+			callback: () => { void this.analysisGenerator.analyzePropertyTags(); }
 		});
 
 		// Command: Generate Modification Report
@@ -204,7 +212,7 @@ export default class PropertiesToolkitPlugin extends Plugin {
 			name: this.languageManager.command('generate-modification-report'),
 			callback: () => {
 				const logs = this.propertyTransformer.getModificationLogs();
-				this.logGenerator.generateModificationReport(logs);
+				void this.logGenerator.generateModificationReport(logs);
 			}
 		});
 	}
@@ -232,30 +240,32 @@ export default class PropertiesToolkitPlugin extends Plugin {
 		new PreviewModal(this.app, {
 			title: this.languageManager.command('delete-empty-properties'),
 			items,
-			confirmLabel: `${result.totalCount} propriété(s) vide(s)`,
-			onConfirm: async () => {
-				const progress = new ProgressModal(this.app, this.languageManager.command('delete-empty-properties'));
-				progress.open();
+			confirmLabel: `${result.totalCount} empty property(ies)`,
+			onConfirm: () => {
+				void (async () => {
+					const progress = new ProgressModal(this.app, this.languageManager.command('delete-empty-properties'));
+					progress.open();
 
-				let fileCount = 0;
-				const entries = Array.from(result.byFile.values());
+					let fileCount = 0;
+					const entries = Array.from(result.byFile.values());
 
-				for (const entry of entries) {
-					await this.app.fileManager.processFrontMatter(entry.file, (fm: any) => {
-						for (const prop of entry.emptyProps) {
-							delete fm[prop];
+					for (const entry of entries) {
+						await this.app.fileManager.processFrontMatter(entry.file, (fm: Record<string, unknown>) => {
+							for (const prop of entry.emptyProps) {
+								delete fm[prop];
+							}
+						});
+						fileCount++;
+						progress.setProgress(fileCount, entries.length);
+						if (fileCount % 50 === 0) {
+							await new Promise(r => setTimeout(r, 0));
 						}
-					});
-					fileCount++;
-					progress.setProgress(fileCount, entries.length);
-					if (fileCount % 50 === 0) {
-						await new Promise(r => setTimeout(r, 0));
 					}
-				}
 
-				progress.finish(
-					`${result.totalCount} propriété(s) supprimée(s) dans ${fileCount} fichier(s).`
-				);
+					progress.finish(
+						`${result.totalCount} property(ies) deleted in ${fileCount} file(s).`
+					);
+				})();
 			},
 		}).open();
 	}
@@ -278,9 +288,7 @@ export default class PropertiesToolkitPlugin extends Plugin {
 			const modal = new Modal(this.app);
 			const title = lang === 'fr' ? 'Properties Toolkit — Aide' : 'Properties Toolkit — Help';
 			modal.titleEl.setText(title);
-			modal.modalEl.style.width = '750px';
-			modal.modalEl.style.maxWidth = '90vw';
-			modal.modalEl.style.maxHeight = '80vh';
+			modal.modalEl.addClass('pt-doc-modal');
 			modal.contentEl.addClass('pt-doc');
 			const component = new Component();
 			component.load();
@@ -295,20 +303,22 @@ export default class PropertiesToolkitPlugin extends Plugin {
 	}
 
 	private searchReplaceValue(): void {
-		new SearchReplaceModal(this.app, this.languageManager, async (params) => {
-			const executor = new SearchReplaceExecutor(this.app, this.languageManager, this.settings);
-			const count = await executor.executeWithPreview(
-				params.propertyName,
-				params.searchValue,
-				params.replaceValue
-			);
+		new SearchReplaceModal(this.app, this.languageManager, (params) => {
+			void (async () => {
+				const executor = new SearchReplaceExecutor(this.app, this.languageManager, this.settings);
+				const count = await executor.executeWithPreview(
+					params.propertyName,
+					params.searchValue,
+					params.replaceValue
+				);
 
-			if (count === 0) {
-				const isFr = this.languageManager.getCurrentLanguage() === 'fr';
-				new Notice(isFr
-					? `Aucune correspondance trouvée pour "${params.searchValue}" dans "${params.propertyName}"`
-					: `No match found for "${params.searchValue}" in "${params.propertyName}"`);
-			}
+				if (count === 0) {
+					const isFr = this.languageManager.getCurrentLanguage() === 'fr';
+					new Notice(isFr
+						? `No match found for "${params.searchValue}" in "${params.propertyName}"`
+						: `No match found for "${params.searchValue}" in "${params.propertyName}"`);
+				}
+			})();
 		}).open();
 	}
 
@@ -325,15 +335,17 @@ export default class PropertiesToolkitPlugin extends Plugin {
 			const applicable = this.registry.getAll().filter(c => c.isApplicable(analysis));
 
 			if (applicable.length === 0) {
-				new Notice(`Aucune opération applicable pour "${propName}".`);
+				new Notice(`No applicable operation for "${propName}".`);
 				return;
 			}
 
-			new OperationSelectorModal(this.app, applicable, async (converter) => {
-				const count = await converter.execute(this.app, analysis);
-				if (count >= 0) {
-					new Notice(`Opération terminée : ${count} fichier(s) modifié(s).`);
-				}
+			new OperationSelectorModal(this.app, applicable, (converter) => {
+				void (async () => {
+					const count = await converter.execute(this.app, analysis);
+					if (count >= 0) {
+						new Notice(`Operation complete: ${count} file(s) modified.`);
+					}
+				})();
 			}).open();
 		}).open();
 	}

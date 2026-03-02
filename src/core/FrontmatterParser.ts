@@ -3,13 +3,13 @@ import { TagInfo, ParsedContent } from '../types/transformer-types';
 export class FrontmatterParser {
 
 	/**
-	 * Parse le contenu d'un fichier pour extraire frontmatter, métadonnées et tags
+	 * Parse file content to extract frontmatter, metadata and tags
 	 */
 	parseFrontmatter(content: string): ParsedContent {
 		const frontmatterRegex = /^---\s*\n(.*?)\n---\s*\n?(.*?)$/s;
 		const match = content.match(frontmatterRegex);
 
-		let metadata: any = {};
+		const metadata: Record<string, string | string[]> = {};
 		let frontmatterText = '';
 		let body = '';
 		let yamlTags: string[] = [];
@@ -76,18 +76,18 @@ export class FrontmatterParser {
 								// Ligne de continuation, ignorer pour l'instant
 								i++;
 							} else {
-								// Nouvelle propriété ou fin des items
+								// New property or end of items
 								break;
 							}
 						}
 						metadata[key] = arrayItems;
 						yamlTags = arrayItems;
-						continue; // i a déjà été incrémenté
+						continue; // i has already been incremented
 					}
 				} else {
-					// Autres propriétés
+					// Other properties
 					if (value) {
-						// Propriété sur une ligne
+						// Property on a single line
 						if (value.startsWith('[') && value.endsWith(']')) {
 							const arrayContent = value.slice(1, -1);
 							const arrayValues = arrayContent
@@ -99,7 +99,7 @@ export class FrontmatterParser {
 							metadata[key] = value.replace(/^["']|["']$/g, '');
 						}
 					} else {
-						// Propriété multilignes
+						// Multiline property
 						const arrayItems: string[] = [];
 						i++;
 						while (i < lines.length) {
@@ -113,14 +113,14 @@ export class FrontmatterParser {
 								// Ligne de continuation, ignorer pour l'instant
 								i++;
 							} else {
-								// Nouvelle propriété ou fin des items
+								// New property or end of items
 								break;
 							}
 						}
 						if (arrayItems.length > 0) {
 							metadata[key] = arrayItems;
 						}
-						continue; // i a déjà été incrémenté
+						continue; // i has already been incremented
 					}
 				}
 
@@ -150,10 +150,10 @@ export class FrontmatterParser {
 	}
 
 	/**
-	 * Reconstruit le contenu avec les métadonnées modifiées
+	 * Rebuild content with modified metadata
 	 */
-	rebuildContent(metadata: any, body: string, tagsToRemoveFromContent: string[] = [], tagsInYamlZone: boolean = true): string {
-		// Supprimer les tags du contenu si nécessaire
+	rebuildContent(metadata: Record<string, string | string[] | number | boolean | null | undefined>, body: string, tagsToRemoveFromContent: string[] = [], tagsInYamlZone: boolean = true): string {
+		// Remove tags from content if necessary
 		if (tagsToRemoveFromContent.length > 0) {
 			for (const tagToRemove of tagsToRemoveFromContent) {
 				const tagWithHash = '#' + tagToRemove;
@@ -185,7 +185,7 @@ export class FrontmatterParser {
 					}
 				}
 			} else if (Array.isArray(value)) {
-				// Gérer les propriétés sous forme de liste avec syntaxe YAML multilignes
+				// Handle list properties with multiline YAML syntax
 				if (value.length > 0) {
 					frontmatterContent += key + ':\n';
 					for (const item of value) {
@@ -204,7 +204,7 @@ export class FrontmatterParser {
 			}
 		}
 
-		// Ajouter les tags inline si nécessaire
+		// Add inline tags if necessary
 		if (tagsToAddInline.length > 0 && !tagsInYamlZone) {
 			const inlineTags = tagsToAddInline.map(tag => '#' + tag).join(' ');
 			body = body.trim();

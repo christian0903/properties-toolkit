@@ -27,43 +27,34 @@ export class SearchReplaceModal extends Modal {
 		contentEl.empty();
 		contentEl.addClass('pt-modal');
 
-		const title = this.languageManager.getCurrentLanguage() === 'fr'
-			? 'Rechercher et remplacer une valeur'
-			: 'Search and replace value';
-		contentEl.createEl('h2', { text: title });
+		contentEl.createEl('h2', { text: 'Search and replace value' });
 
 		// Property name
 		new Setting(contentEl)
-			.setName(this.languageManager.getCurrentLanguage() === 'fr' ? 'Nom de la propriété' : 'Property name')
-			.setDesc(this.languageManager.getCurrentLanguage() === 'fr'
-				? 'La propriété dans laquelle chercher'
-				: 'The property to search in')
+			.setName('Property name')
+			.setDesc('The property to search in')
 			.addText(text => text
-				.setPlaceholder('status, type, category...')
+				.setPlaceholder('e.g. status, type, category')
 				.onChange(value => {
 					this.params.propertyName = value.trim();
 				}));
 
 		// Search value
 		new Setting(contentEl)
-			.setName(this.languageManager.getCurrentLanguage() === 'fr' ? 'Valeur à chercher' : 'Search value')
-			.setDesc(this.languageManager.getCurrentLanguage() === 'fr'
-				? 'La valeur exacte à remplacer'
-				: 'The exact value to replace')
+			.setName('Search value')
+			.setDesc('The exact value to replace')
 			.addText(text => text
-				.setPlaceholder(this.languageManager.getCurrentLanguage() === 'fr' ? 'ancienne valeur' : 'old value')
+				.setPlaceholder('old value')
 				.onChange(value => {
 					this.params.searchValue = value;
 				}));
 
 		// Replace value
 		new Setting(contentEl)
-			.setName(this.languageManager.getCurrentLanguage() === 'fr' ? 'Nouvelle valeur' : 'Replace value')
-			.setDesc(this.languageManager.getCurrentLanguage() === 'fr'
-				? 'La nouvelle valeur (vide = supprimer)'
-				: 'The new value (empty = delete)')
+			.setName('Replace value')
+			.setDesc('The new value (empty = delete)')
 			.addText(text => text
-				.setPlaceholder(this.languageManager.getCurrentLanguage() === 'fr' ? 'nouvelle valeur' : 'new value')
+				.setPlaceholder('new value')
 				.onChange(value => {
 					this.params.replaceValue = value;
 				}));
@@ -71,13 +62,11 @@ export class SearchReplaceModal extends Modal {
 		// Buttons
 		const buttonRow = contentEl.createEl('div', { cls: 'pt-button-row' });
 
-		const cancelBtn = buttonRow.createEl('button', {
-			text: this.languageManager.getCurrentLanguage() === 'fr' ? 'Annuler' : 'Cancel'
-		});
+		const cancelBtn = buttonRow.createEl('button', { text: 'Cancel' });
 		cancelBtn.addEventListener('click', () => this.close());
 
 		const submitBtn = buttonRow.createEl('button', {
-			text: this.languageManager.getCurrentLanguage() === 'fr' ? 'Rechercher' : 'Search',
+			text: 'Search',
 			cls: 'mod-cta'
 		});
 		submitBtn.addEventListener('click', () => {

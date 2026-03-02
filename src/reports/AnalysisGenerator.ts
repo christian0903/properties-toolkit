@@ -1,4 +1,4 @@
-import { TFile, Notice } from 'obsidian';
+import { Notice, TFile } from 'obsidian';
 import { TransformerSettings } from '../types/transformer-types';
 import { LanguageManager } from '../lang/LanguageManager';
 import { FrontmatterParser } from '../core/FrontmatterParser';
@@ -23,10 +23,10 @@ export class AnalysisGenerator {
 	}
 
 	/**
-	 * Lance l'analyse des tags de propriétés selon le type configuré
+	 * Run property tag analysis based on configured type
 	 */
 	async analyzePropertyTags(): Promise<void> {
-		const files = await this.fileManager.getTargetFiles();
+		const files = this.fileManager.getTargetFiles();
 		const propertyList = this.fileManager.getPropertyList();
 
 		if (propertyList.length === 0) {
@@ -46,7 +46,7 @@ export class AnalysisGenerator {
 	}
 
 	/**
-	 * Génère une analyse organisée par propriété
+	 * Generate analysis organized by property
 	 */
 	async generatePropertyBasedAnalysis(files: TFile[], propertyList: string[], analysisFileName: string): Promise<void> {
 		let analysisContent = '# ' + this.languageManager.analysis('by-property-title') + ' - ' + new Date().toISOString().split('T')[0] + '\n\n';
@@ -158,7 +158,7 @@ export class AnalysisGenerator {
 	}
 
 	/**
-	 * Génère une analyse détaillée organisée par fichier
+	 * Generate detailed analysis organized by file
 	 */
 	async generateFileBasedAnalysis(files: TFile[], propertyList: string[], analysisFileName: string): Promise<void> {
 		let analysisContent = '# ' + this.languageManager.analysis('by-file-title') + ' - ' + new Date().toISOString().split('T')[0] + '\n\n';
@@ -197,7 +197,7 @@ export class AnalysisGenerator {
 				wouldRemoveInlineTags: [] as string[]
 			};
 
-			// Analyser les tags YAML
+			// Analyze YAML tags
 			for (const tag of yamlTags) {
 				for (const propName of propertyList) {
 					if (tag.startsWith(propName + '/')) {
@@ -218,7 +218,7 @@ export class AnalysisGenerator {
 				}
 			}
 
-			// Analyser les tags inline
+			// Analyze inline tags
 			for (const tagInfo of inlineTags) {
 				for (const propName of propertyList) {
 					if (tagInfo.tag.startsWith(propName + '/')) {
@@ -239,7 +239,7 @@ export class AnalysisGenerator {
 				}
 			}
 
-			// Analyser les propriétés
+			// Analyze properties
 			for (const propName of propertyList) {
 				if (metadata[propName]) {
 					const propValue = metadata[propName];
@@ -388,7 +388,7 @@ export class AnalysisGenerator {
 	}
 
 	/**
-	 * Met à jour les settings
+	 * Update settings
 	 */
 	updateSettings(newSettings: TransformerSettings): void {
 		this.settings = newSettings;

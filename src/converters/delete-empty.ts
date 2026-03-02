@@ -5,8 +5,8 @@ import { ProgressModal } from '../modals/progress-modal';
 
 export class DeleteEmptyConverter implements PropertyConverter {
   id = 'delete-empty';
-  label = 'Supprimer les valeurs vides';
-  description = 'Supprimer cette propriété dans les fichiers où elle est vide ou null';
+  label = 'Delete empty values';
+  description = 'Delete this property in files where it is empty or null';
 
   isApplicable(analysis: PropertyAnalysis): boolean {
     return analysis.emptyFiles.length > 0;
@@ -20,31 +20,33 @@ export class DeleteEmptyConverter implements PropertyConverter {
       const items: PreviewItem[] = emptyFiles.map(occ => ({
         filePath: occ.file.path,
         fileName: occ.file.basename,
-        detail: `"${propName}" sera supprimé`,
+        detail: `"${propName}" will be deleted`,
       }));
 
       new PreviewModal(app, {
-        title: `Supprimer "${propName}" (valeurs vides)`,
+        title: `Delete "${propName}" (empty values)`,
         items,
-        confirmLabel: `Supprimer dans ${emptyFiles.length} fichier(s)`,
-        onConfirm: async () => {
-          const progress = new ProgressModal(app, `Suppression de "${propName}"...`);
-          progress.open();
+        confirmLabel: `Delete in ${emptyFiles.length} file(s)`,
+        onConfirm: () => {
+          void (async () => {
+            const progress = new ProgressModal(app, `Suppression de "${propName}"...`);
+            progress.open();
 
-          let count = 0;
-          for (const occ of emptyFiles) {
-            await app.fileManager.processFrontMatter(occ.file, (fm: any) => {
-              delete fm[propName];
-            });
-            count++;
-            progress.setProgress(count, emptyFiles.length);
-            if (count % 50 === 0) {
-              await new Promise(r => setTimeout(r, 0));
+            let count = 0;
+            for (const occ of emptyFiles) {
+              await app.fileManager.processFrontMatter(occ.file, (fm: Record<string, unknown>) => {
+                delete fm[propName];
+              });
+              count++;
+              progress.setProgress(count, emptyFiles.length);
+              if (count % 50 === 0) {
+                await new Promise(r => setTimeout(r, 0));
+              }
             }
-          }
 
-          progress.finish(`Terminé : "${propName}" supprimé dans ${count} fichier(s).`);
-          resolve(count);
+            progress.finish(`Done: "${propName}" deleted in ${count} file(s).`);
+            resolve(count);
+          })();
         },
       }).open();
     });

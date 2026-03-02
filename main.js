@@ -40,10 +40,10 @@ var en_default = {
     "search-replace-value": "Search and replace value in property"
   },
   settings: {
-    title: "Properties Toolkit Settings",
-    "section-general": "General Settings",
-    "section-manager": "Property Management",
-    "section-transformer": "Property \u2194 Tag Transformation",
+    title: "Properties Toolkit settings",
+    "section-general": "General settings",
+    "section-manager": "Property management",
+    "section-transformer": "Property \u2194 tag transformation",
     language: "Language",
     "language-desc": "Plugin interface language",
     "target-folder": "Target folder",
@@ -183,7 +183,7 @@ var fr_default = {
     title: "Param\xE8tres Properties Toolkit",
     "section-general": "Param\xE8tres g\xE9n\xE9raux",
     "section-manager": "Gestion des propri\xE9t\xE9s",
-    "section-transformer": "Transformation Propri\xE9t\xE9 \u2194 Tag",
+    "section-transformer": "Transformation propri\xE9t\xE9 \u2194 tag",
     language: "Langue",
     "language-desc": "Langue de l'interface du plugin",
     "target-folder": "Dossier cible",
@@ -318,14 +318,15 @@ var LanguageManager = class {
   detectLanguage() {
     var _a;
     try {
-      const momentLang = (_a = window.moment) == null ? void 0 : _a.locale();
+      const windowWithMoment = window;
+      const momentLang = (_a = windowWithMoment.moment) == null ? void 0 : _a.locale();
       if (momentLang && momentLang.startsWith("fr"))
         return "fr";
       const htmlLang = document.documentElement.lang;
       if (htmlLang && htmlLang.startsWith("fr"))
         return "fr";
-    } catch (error) {
-      console.log("Could not detect Obsidian language, falling back to English");
+    } catch (e) {
+      console.debug("Could not detect Obsidian language, falling back to English");
     }
     return "en";
   }
@@ -606,7 +607,7 @@ var PreviewModal = class extends import_obsidian2.Modal {
     contentEl.addClass("pt-modal");
     contentEl.createEl("h2", { text: this.config.title });
     const summary = contentEl.createEl("div", { cls: "pt-summary" });
-    summary.setText(`${this.config.items.length} fichier(s) concern\xE9(s)`);
+    summary.setText(`${this.config.items.length} file(s) affected`);
     const list = contentEl.createEl("div", { cls: "pt-preview-list" });
     const MAX_VISIBLE = 200;
     const itemsToShow = this.config.items.slice(0, MAX_VISIBLE);
@@ -618,11 +619,11 @@ var PreviewModal = class extends import_obsidian2.Modal {
     if (this.config.items.length > MAX_VISIBLE) {
       list.createEl("div", {
         cls: "pt-preview-item",
-        text: `\u2026 et ${this.config.items.length - MAX_VISIBLE} autre(s)`
+        text: `... and ${this.config.items.length - MAX_VISIBLE} more`
       });
     }
     const buttons = contentEl.createEl("div", { cls: "pt-button-row" });
-    const cancelBtn = buttons.createEl("button", { text: "Annuler" });
+    const cancelBtn = buttons.createEl("button", { text: "Cancel" });
     cancelBtn.addEventListener("click", () => this.close());
     const confirmBtn = buttons.createEl("button", {
       text: this.config.confirmLabel,
@@ -655,23 +656,23 @@ var ProgressModal = class extends import_obsidian3.Modal {
     this.progressEl.max = 100;
     this.progressEl.value = 0;
     this.textEl = container.createEl("div", { cls: "pt-progress-text" });
-    this.textEl.setText("Pr\xE9paration...");
+    this.textEl.setText("Preparing...");
     this.modalEl.querySelectorAll(".modal-close-button").forEach((el) => {
-      el.style.display = "none";
+      el.addClass("pt-close-button-hidden");
     });
   }
   setProgress(current, total) {
     this.progressEl.value = current / total * 100;
-    this.textEl.setText(`Traitement ${current} / ${total}...`);
+    this.textEl.setText(`Processing ${current} / ${total}...`);
   }
   finish(message) {
     this.textEl.setText(message);
     this.progressEl.value = 100;
     this.modalEl.querySelectorAll(".modal-close-button").forEach((el) => {
-      el.style.display = "";
+      el.removeClass("pt-close-button-hidden");
     });
     const buttons = this.contentEl.createEl("div", { cls: "pt-button-row" });
-    buttons.createEl("button", { text: "Fermer", cls: "mod-cta" }).addEventListener("click", () => this.close());
+    buttons.createEl("button", { text: "Close", cls: "mod-cta" }).addEventListener("click", () => this.close());
   }
   onClose() {
     this.contentEl.empty();
@@ -702,7 +703,7 @@ var MultiValueChoiceModal = class extends import_obsidian4.Modal {
       text: `List \u2192 Text : "${this.propertyName}"`
     });
     contentEl.createEl("p", {
-      text: `${this.multiValueFiles.length} fichier(s) ont plusieurs valeurs. S\xE9lectionnez la valeur \xE0 garder pour chaque fichier.`
+      text: `${this.multiValueFiles.length} file(s) have multiple values. Select the value to keep for each file.`
     });
     const list = contentEl.createEl("div", { cls: "pt-preview-list" });
     for (const occ of this.multiValueFiles) {
@@ -719,8 +720,7 @@ var MultiValueChoiceModal = class extends import_obsidian4.Modal {
       for (let i = 0; i < values.length; i++) {
         const val = values[i];
         const label = valuesContainer.createEl("label", { cls: "pt-radio-label" });
-        const radio = label.createEl("input");
-        radio.type = "radio";
+        const radio = label.createEl("input", { type: "radio" });
         radio.name = groupName;
         radio.checked = i === 0;
         radio.addEventListener("change", () => {
@@ -732,10 +732,10 @@ var MultiValueChoiceModal = class extends import_obsidian4.Modal {
       }
     }
     const buttons = contentEl.createEl("div", { cls: "pt-button-row" });
-    const cancelBtn = buttons.createEl("button", { text: "Annuler" });
+    const cancelBtn = buttons.createEl("button", { text: "Cancel" });
     cancelBtn.addEventListener("click", () => this.close());
     const confirmBtn = buttons.createEl("button", {
-      text: `Convertir ${this.multiValueFiles.length} fichier(s)`,
+      text: `Convert ${this.multiValueFiles.length} file(s)`,
       cls: "mod-cta"
     });
     confirmBtn.addEventListener("click", () => {
@@ -749,17 +749,17 @@ var MultiValueChoiceModal = class extends import_obsidian4.Modal {
 };
 
 // src/core/type-updater.ts
-var TYPES_PATH = ".obsidian/types.json";
 async function updatePropertyType(app, propertyName, newType) {
+  const typesPath = `${app.vault.configDir}/types.json`;
   let data = { types: {} };
   try {
-    const raw = await app.vault.adapter.read(TYPES_PATH);
+    const raw = await app.vault.adapter.read(typesPath);
     data = JSON.parse(raw);
   } catch (e) {
     data = { types: {} };
   }
   data.types[propertyName] = newType;
-  await app.vault.adapter.write(TYPES_PATH, JSON.stringify(data, null, "  "));
+  await app.vault.adapter.write(typesPath, JSON.stringify(data, null, "  "));
 }
 
 // src/converters/list-to-text.ts
@@ -767,7 +767,7 @@ var ListToTextConverter = class {
   constructor() {
     this.id = "list-to-text";
     this.label = "List \u2192 Text";
-    this.description = "Convertir les valeurs liste en texte simple (garde une seule valeur)";
+    this.description = "Convert list values to plain text (keeps a single value)";
   }
   isApplicable(analysis) {
     return analysis.singleValueFiles.length > 0 || analysis.multiValueFiles.length > 0;
@@ -808,25 +808,27 @@ var ListToTextConverter = class {
     new PreviewModal(app, {
       title: `List \u2192 Text : "${propName}"`,
       items,
-      confirmLabel: `Convertir ${conversions.length} fichier(s)`,
-      onConfirm: async () => {
-        const progress = new ProgressModal(app, `Conversion de "${propName}"...`);
-        progress.open();
-        let count = 0;
-        for (const conv of conversions) {
-          const val = conv.chosenValue;
-          await app.fileManager.processFrontMatter(conv.file, (fm) => {
-            fm[propName] = val;
-          });
-          count++;
-          progress.setProgress(count, conversions.length);
-          if (count % 50 === 0) {
-            await new Promise((r) => setTimeout(r, 0));
+      confirmLabel: `Convert ${conversions.length} file(s)`,
+      onConfirm: () => {
+        void (async () => {
+          const progress = new ProgressModal(app, `Conversion de "${propName}"...`);
+          progress.open();
+          let count = 0;
+          for (const conv of conversions) {
+            const val = conv.chosenValue;
+            await app.fileManager.processFrontMatter(conv.file, (fm) => {
+              fm[propName] = val;
+            });
+            count++;
+            progress.setProgress(count, conversions.length);
+            if (count % 50 === 0) {
+              await new Promise((r) => setTimeout(r, 0));
+            }
           }
-        }
-        await updatePropertyType(app, propName, "text");
-        progress.finish(`Termin\xE9 : ${count} fichier(s) converti(s).`);
-        resolve(count);
+          await updatePropertyType(app, propName, "text");
+          progress.finish(`Done: ${count} file(s) converted.`);
+          resolve(count);
+        })();
       }
     }).open();
   }
@@ -837,7 +839,7 @@ var TextToListConverter = class {
   constructor() {
     this.id = "text-to-list";
     this.label = "Text \u2192 List";
-    this.description = "Convertir les valeurs texte en liste (enveloppe chaque valeur dans une liste)";
+    this.description = "Convert text values to list (wraps each value in a list)";
   }
   isApplicable(analysis) {
     return analysis.textFiles.length > 0;
@@ -854,26 +856,28 @@ var TextToListConverter = class {
       new PreviewModal(app, {
         title: `Text \u2192 List : "${propName}"`,
         items,
-        confirmLabel: `Convertir ${textFiles.length} fichier(s)`,
-        onConfirm: async () => {
-          const progress = new ProgressModal(app, `Conversion de "${propName}"...`);
-          progress.open();
-          let count = 0;
-          for (const occ of textFiles) {
-            await app.fileManager.processFrontMatter(occ.file, (fm) => {
-              if (typeof fm[propName] === "string") {
-                fm[propName] = [fm[propName]];
+        confirmLabel: `Convert ${textFiles.length} file(s)`,
+        onConfirm: () => {
+          void (async () => {
+            const progress = new ProgressModal(app, `Conversion de "${propName}"...`);
+            progress.open();
+            let count = 0;
+            for (const occ of textFiles) {
+              await app.fileManager.processFrontMatter(occ.file, (fm) => {
+                if (typeof fm[propName] === "string") {
+                  fm[propName] = [fm[propName]];
+                }
+              });
+              count++;
+              progress.setProgress(count, textFiles.length);
+              if (count % 50 === 0) {
+                await new Promise((r) => setTimeout(r, 0));
               }
-            });
-            count++;
-            progress.setProgress(count, textFiles.length);
-            if (count % 50 === 0) {
-              await new Promise((r) => setTimeout(r, 0));
             }
-          }
-          await updatePropertyType(app, propName, "multitext");
-          progress.finish(`Termin\xE9 : ${count} fichier(s) converti(s).`);
-          resolve(count);
+            await updatePropertyType(app, propName, "multitext");
+            progress.finish(`Done: ${count} file(s) converted.`);
+            resolve(count);
+          })();
         }
       }).open();
     });
@@ -884,8 +888,8 @@ var TextToListConverter = class {
 var DeleteEmptyConverter = class {
   constructor() {
     this.id = "delete-empty";
-    this.label = "Supprimer les valeurs vides";
-    this.description = "Supprimer cette propri\xE9t\xE9 dans les fichiers o\xF9 elle est vide ou null";
+    this.label = "Delete empty values";
+    this.description = "Delete this property in files where it is empty or null";
   }
   isApplicable(analysis) {
     return analysis.emptyFiles.length > 0;
@@ -897,28 +901,30 @@ var DeleteEmptyConverter = class {
       const items = emptyFiles.map((occ) => ({
         filePath: occ.file.path,
         fileName: occ.file.basename,
-        detail: `"${propName}" sera supprim\xE9`
+        detail: `"${propName}" will be deleted`
       }));
       new PreviewModal(app, {
-        title: `Supprimer "${propName}" (valeurs vides)`,
+        title: `Delete "${propName}" (empty values)`,
         items,
-        confirmLabel: `Supprimer dans ${emptyFiles.length} fichier(s)`,
-        onConfirm: async () => {
-          const progress = new ProgressModal(app, `Suppression de "${propName}"...`);
-          progress.open();
-          let count = 0;
-          for (const occ of emptyFiles) {
-            await app.fileManager.processFrontMatter(occ.file, (fm) => {
-              delete fm[propName];
-            });
-            count++;
-            progress.setProgress(count, emptyFiles.length);
-            if (count % 50 === 0) {
-              await new Promise((r) => setTimeout(r, 0));
+        confirmLabel: `Delete in ${emptyFiles.length} file(s)`,
+        onConfirm: () => {
+          void (async () => {
+            const progress = new ProgressModal(app, `Suppression de "${propName}"...`);
+            progress.open();
+            let count = 0;
+            for (const occ of emptyFiles) {
+              await app.fileManager.processFrontMatter(occ.file, (fm) => {
+                delete fm[propName];
+              });
+              count++;
+              progress.setProgress(count, emptyFiles.length);
+              if (count % 50 === 0) {
+                await new Promise((r) => setTimeout(r, 0));
+              }
             }
-          }
-          progress.finish(`Termin\xE9 : "${propName}" supprim\xE9 dans ${count} fichier(s).`);
-          resolve(count);
+            progress.finish(`Done: "${propName}" deleted in ${count} file(s).`);
+            resolve(count);
+          })();
         }
       }).open();
     });
@@ -932,13 +938,13 @@ var PropertySelectorModal = class extends import_obsidian5.FuzzySuggestModal {
     super(app);
     this.properties = properties;
     this.onChoose = onChoose;
-    this.setPlaceholder("Tapez pour filtrer les propri\xE9t\xE9s...");
+    this.setPlaceholder("Type to filter properties...");
   }
   getItems() {
     return this.properties;
   }
   getItemText(item) {
-    return `${item.name} (${item.fileCount} fichiers)`;
+    return `${item.name} (${item.fileCount} files)`;
   }
   onChooseItem(item, _evt) {
     this.onChoose(item.name);
@@ -952,7 +958,7 @@ var OperationSelectorModal = class extends import_obsidian6.SuggestModal {
     super(app);
     this.converters = converters;
     this.onChoose = onChoose;
-    this.setPlaceholder("Choisir une op\xE9ration...");
+    this.setPlaceholder("Choose an operation...");
   }
   getSuggestions(query) {
     const q = query.toLowerCase();
@@ -972,12 +978,12 @@ var OperationSelectorModal = class extends import_obsidian6.SuggestModal {
 // src/core/FrontmatterParser.ts
 var FrontmatterParser = class {
   /**
-   * Parse le contenu d'un fichier pour extraire frontmatter, métadonnées et tags
+   * Parse file content to extract frontmatter, metadata and tags
    */
   parseFrontmatter(content) {
     const frontmatterRegex = /^---\s*\n(.*?)\n---\s*\n?(.*?)$/s;
     const match = content.match(frontmatterRegex);
-    let metadata = {};
+    const metadata = {};
     let frontmatterText = "";
     let body = "";
     let yamlTags = [];
@@ -1091,7 +1097,7 @@ var FrontmatterParser = class {
     return { metadata, frontmatter: frontmatterText, body, yamlTags, inlineTags };
   }
   /**
-   * Reconstruit le contenu avec les métadonnées modifiées
+   * Rebuild content with modified metadata
    */
   rebuildContent(metadata, body, tagsToRemoveFromContent = [], tagsInYamlZone = true) {
     if (tagsToRemoveFromContent.length > 0) {
@@ -1174,9 +1180,9 @@ var FileManager = class {
     this.languageManager = languageManager;
   }
   /**
-   * Détermine les fichiers à traiter selon le paramètre targetFolder
+   * Determine files to process based on targetFolder setting
    */
-  async getTargetFiles() {
+  getTargetFiles() {
     const folderPath = this.settings.targetFolder.trim();
     if (!folderPath) {
       return this.app.vault.getMarkdownFiles();
@@ -1207,25 +1213,25 @@ var FileManager = class {
     return [];
   }
   /**
-   * Parse la liste des propriétés depuis les settings
+   * Parse property list from settings
    */
   getPropertyList() {
     return this.settings.propertyList.split(",").map((prop) => prop.trim()).filter((prop) => prop.length > 0);
   }
   /**
-   * Lit le contenu d'un fichier
+   * Read file content
    */
   async readFile(file) {
     return await this.app.vault.read(file);
   }
   /**
-   * Modifie le contenu d'un fichier
+   * Modify file content
    */
   async writeFile(file, content) {
     await this.app.vault.modify(file, content);
   }
   /**
-   * Crée ou écrase un fichier
+   * Create or overwrite a file
    */
   async createFile(path, content) {
     const normalizedPath = (0, import_obsidian7.normalizePath)(path);
@@ -1237,7 +1243,7 @@ var FileManager = class {
     }
   }
   /**
-   * Met à jour les settings (utilisé par les autres modules)
+   * Update settings (used by other modules)
    */
   updateSettings(newSettings) {
     this.settings = newSettings;
@@ -1255,16 +1261,16 @@ var PropertyTransformer = class {
     this.fileManager = fileManager;
   }
   /**
-   * Convertit les propriétés YAML en tags
+   * Convert YAML properties to tags
    */
   async transposePropertiesToTags() {
-    const files = await this.fileManager.getTargetFiles();
+    const files = this.fileManager.getTargetFiles();
     const propertyList = this.fileManager.getPropertyList();
     let modifiedCount = 0;
     this.modificationLogs = [];
     for (const file of files) {
       const content = await this.fileManager.readFile(file);
-      const { metadata, frontmatter, body } = this.frontmatterParser.parseFrontmatter(content);
+      const { metadata, body } = this.frontmatterParser.parseFrontmatter(content);
       let modified = false;
       const log = {
         fileName: file.path,
@@ -1332,16 +1338,16 @@ var PropertyTransformer = class {
     return this.modificationLogs;
   }
   /**
-   * Convertit les tags en propriétés YAML
+   * Convert tags to YAML properties
    */
   async transposeTagsToProperties() {
-    const files = await this.fileManager.getTargetFiles();
+    const files = this.fileManager.getTargetFiles();
     const propertyList = this.fileManager.getPropertyList();
     let modifiedCount = 0;
     this.modificationLogs = [];
     for (const file of files) {
       const content = await this.fileManager.readFile(file);
-      const { metadata, frontmatter, body, yamlTags, inlineTags } = this.frontmatterParser.parseFrontmatter(content);
+      const { metadata, body, yamlTags, inlineTags } = this.frontmatterParser.parseFrontmatter(content);
       let modified = false;
       const log = {
         fileName: file.path,
@@ -1438,16 +1444,16 @@ var PropertyTransformer = class {
     return this.modificationLogs;
   }
   /**
-   * Supprime les propriétés correspondant aux tags existants
+   * Remove properties corresponding to existing tags
    */
   async removeCorrespondingProperties() {
-    const files = await this.fileManager.getTargetFiles();
+    const files = this.fileManager.getTargetFiles();
     const propertyList = this.fileManager.getPropertyList();
     let modifiedCount = 0;
     this.modificationLogs = [];
     for (const file of files) {
       const content = await this.fileManager.readFile(file);
-      const { metadata, frontmatter, body, yamlTags, inlineTags } = this.frontmatterParser.parseFrontmatter(content);
+      const { metadata, body, yamlTags, inlineTags } = this.frontmatterParser.parseFrontmatter(content);
       let modified = false;
       const log = {
         fileName: file.path,
@@ -1490,16 +1496,16 @@ var PropertyTransformer = class {
     return this.modificationLogs;
   }
   /**
-   * Supprime les tags correspondant aux propriétés existantes
+   * Remove tags corresponding to existing properties
    */
   async removeCorrespondingTags() {
-    const files = await this.fileManager.getTargetFiles();
+    const files = this.fileManager.getTargetFiles();
     const propertyList = this.fileManager.getPropertyList();
     let modifiedCount = 0;
     this.modificationLogs = [];
     for (const file of files) {
       const content = await this.fileManager.readFile(file);
-      const { metadata, frontmatter, body, yamlTags, inlineTags } = this.frontmatterParser.parseFrontmatter(content);
+      const { metadata, body, yamlTags, inlineTags } = this.frontmatterParser.parseFrontmatter(content);
       let modified = false;
       const log = {
         fileName: file.path,
@@ -1553,20 +1559,20 @@ var PropertyTransformer = class {
     return this.modificationLogs;
   }
   /**
-   * Met à jour les settings
+   * Update settings
    */
   updateSettings(newSettings) {
     this.settings = newSettings;
     this.fileManager.updateSettings(newSettings);
   }
   /**
-   * Récupère les logs de modification
+   * Get modification logs
    */
   getModificationLogs() {
     return this.modificationLogs;
   }
   /**
-   * Vide les logs de modification
+   * Clear modification logs
    */
   clearModificationLogs() {
     this.modificationLogs = [];
@@ -1582,7 +1588,7 @@ var LogGenerator = class {
     this.fileManager = fileManager;
   }
   /**
-   * Crée un fichier de log détaillé pour une commande
+   * Create a detailed log file for a command
    */
   async createDetailedLog(commandName, modificationLogs) {
     if (!this.settings.enableLogging || modificationLogs.length === 0) {
@@ -1692,7 +1698,7 @@ var LogGenerator = class {
     }
   }
   /**
-   * Génère un rapport de modifications
+   * Generate modification report
    */
   async generateModificationReport(modificationLogs) {
     if (modificationLogs.length === 0) {
@@ -1735,7 +1741,7 @@ var LogGenerator = class {
     }
   }
   /**
-   * Met à jour les settings
+   * Update settings
    */
   updateSettings(newSettings) {
     this.settings = newSettings;
@@ -1752,10 +1758,10 @@ var AnalysisGenerator = class {
     this.fileManager = fileManager;
   }
   /**
-   * Lance l'analyse des tags de propriétés selon le type configuré
+   * Run property tag analysis based on configured type
    */
   async analyzePropertyTags() {
-    const files = await this.fileManager.getTargetFiles();
+    const files = this.fileManager.getTargetFiles();
     const propertyList = this.fileManager.getPropertyList();
     if (propertyList.length === 0) {
       new import_obsidian10.Notice(this.languageManager.notice("no-properties"));
@@ -1771,7 +1777,7 @@ var AnalysisGenerator = class {
     }
   }
   /**
-   * Génère une analyse organisée par propriété
+   * Generate analysis organized by property
    */
   async generatePropertyBasedAnalysis(files, propertyList, analysisFileName) {
     let analysisContent = "# " + this.languageManager.analysis("by-property-title") + " - " + (/* @__PURE__ */ new Date()).toISOString().split("T")[0] + "\n\n";
@@ -1862,7 +1868,7 @@ var AnalysisGenerator = class {
     }
   }
   /**
-   * Génère une analyse détaillée organisée par fichier
+   * Generate detailed analysis organized by file
    */
   async generateFileBasedAnalysis(files, propertyList, analysisFileName) {
     let analysisContent = "# " + this.languageManager.analysis("by-file-title") + " - " + (/* @__PURE__ */ new Date()).toISOString().split("T")[0] + "\n\n";
@@ -2039,7 +2045,7 @@ var AnalysisGenerator = class {
     }
   }
   /**
-   * Met à jour les settings
+   * Update settings
    */
   updateSettings(newSettings) {
     this.settings = newSettings;
@@ -2056,8 +2062,8 @@ var PropertiesToolkitSettingTab = class extends import_obsidian11.PluginSettingT
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl("h2", { text: this.settingsManager.languageManager.setting("title") });
-    containerEl.createEl("h3", { text: this.settingsManager.languageManager.setting("section-general") });
+    new import_obsidian11.Setting(containerEl).setName(this.settingsManager.languageManager.setting("title")).setHeading();
+    new import_obsidian11.Setting(containerEl).setName(this.settingsManager.languageManager.setting("section-general")).setHeading();
     new import_obsidian11.Setting(containerEl).setName(this.settingsManager.languageManager.setting("language")).setDesc(this.settingsManager.languageManager.setting("language-desc")).addDropdown((dropdown) => {
       const languages = this.settingsManager.languageManager.getAvailableLanguages();
       languages.forEach((lang) => {
@@ -2081,7 +2087,7 @@ var PropertiesToolkitSettingTab = class extends import_obsidian11.PluginSettingT
       this.settingsManager.settings.enableLogging = value;
       await this.settingsManager.saveSettings();
     }));
-    containerEl.createEl("h3", { text: this.settingsManager.languageManager.setting("section-transformer") });
+    new import_obsidian11.Setting(containerEl).setName(this.settingsManager.languageManager.setting("section-transformer")).setHeading();
     new import_obsidian11.Setting(containerEl).setName(this.settingsManager.languageManager.setting("property-list")).setDesc(this.settingsManager.languageManager.setting("property-list-desc")).addText((text) => text.setPlaceholder(this.settingsManager.languageManager.setting("property-list-placeholder")).setValue(this.settingsManager.settings.propertyList).onChange(async (value) => {
       this.settingsManager.settings.propertyList = value;
       await this.settingsManager.saveSettings();
@@ -2130,24 +2136,21 @@ var SearchReplaceModal = class extends import_obsidian12.Modal {
     const { contentEl } = this;
     contentEl.empty();
     contentEl.addClass("pt-modal");
-    const title = this.languageManager.getCurrentLanguage() === "fr" ? "Rechercher et remplacer une valeur" : "Search and replace value";
-    contentEl.createEl("h2", { text: title });
-    new import_obsidian12.Setting(contentEl).setName(this.languageManager.getCurrentLanguage() === "fr" ? "Nom de la propri\xE9t\xE9" : "Property name").setDesc(this.languageManager.getCurrentLanguage() === "fr" ? "La propri\xE9t\xE9 dans laquelle chercher" : "The property to search in").addText((text) => text.setPlaceholder("status, type, category...").onChange((value) => {
+    contentEl.createEl("h2", { text: "Search and replace value" });
+    new import_obsidian12.Setting(contentEl).setName("Property name").setDesc("The property to search in").addText((text) => text.setPlaceholder("e.g. status, type, category").onChange((value) => {
       this.params.propertyName = value.trim();
     }));
-    new import_obsidian12.Setting(contentEl).setName(this.languageManager.getCurrentLanguage() === "fr" ? "Valeur \xE0 chercher" : "Search value").setDesc(this.languageManager.getCurrentLanguage() === "fr" ? "La valeur exacte \xE0 remplacer" : "The exact value to replace").addText((text) => text.setPlaceholder(this.languageManager.getCurrentLanguage() === "fr" ? "ancienne valeur" : "old value").onChange((value) => {
+    new import_obsidian12.Setting(contentEl).setName("Search value").setDesc("The exact value to replace").addText((text) => text.setPlaceholder("old value").onChange((value) => {
       this.params.searchValue = value;
     }));
-    new import_obsidian12.Setting(contentEl).setName(this.languageManager.getCurrentLanguage() === "fr" ? "Nouvelle valeur" : "Replace value").setDesc(this.languageManager.getCurrentLanguage() === "fr" ? "La nouvelle valeur (vide = supprimer)" : "The new value (empty = delete)").addText((text) => text.setPlaceholder(this.languageManager.getCurrentLanguage() === "fr" ? "nouvelle valeur" : "new value").onChange((value) => {
+    new import_obsidian12.Setting(contentEl).setName("Replace value").setDesc("The new value (empty = delete)").addText((text) => text.setPlaceholder("new value").onChange((value) => {
       this.params.replaceValue = value;
     }));
     const buttonRow = contentEl.createEl("div", { cls: "pt-button-row" });
-    const cancelBtn = buttonRow.createEl("button", {
-      text: this.languageManager.getCurrentLanguage() === "fr" ? "Annuler" : "Cancel"
-    });
+    const cancelBtn = buttonRow.createEl("button", { text: "Cancel" });
     cancelBtn.addEventListener("click", () => this.close());
     const submitBtn = buttonRow.createEl("button", {
-      text: this.languageManager.getCurrentLanguage() === "fr" ? "Rechercher" : "Search",
+      text: "Search",
       cls: "mod-cta"
     });
     submitBtn.addEventListener("click", () => {
@@ -2237,7 +2240,6 @@ var SearchReplaceExecutor = class {
     if (matches.length === 0) {
       return 0;
     }
-    const isFr = this.languageManager.getCurrentLanguage() === "fr";
     const items = matches.map((match) => {
       let detail;
       if (Array.isArray(match.oldValue)) {
@@ -2246,7 +2248,7 @@ var SearchReplaceExecutor = class {
         ).filter((v) => v !== "\u2205" || replaceValue);
         detail = `[${match.oldValue.join(", ")}] \u2192 [${replaceValue ? newArr.join(", ") : newArr.filter((v) => v !== searchValue).join(", ")}]`;
       } else {
-        detail = `"${searchValue}" \u2192 "${replaceValue || (isFr ? "(supprim\xE9)" : "(deleted)")}"`;
+        detail = `"${searchValue}" \u2192 "${replaceValue || "(deleted)"}"`;
       }
       return {
         filePath: match.file.path,
@@ -2255,14 +2257,16 @@ var SearchReplaceExecutor = class {
       };
     });
     return new Promise((resolve) => {
-      const title = isFr ? `Remplacer "${searchValue}" par "${replaceValue || "(supprimer)"}" dans "${propertyName}"` : `Replace "${searchValue}" with "${replaceValue || "(delete)"}" in "${propertyName}"`;
+      const title = `Replace "${searchValue}" with "${replaceValue || "(delete)"}" in "${propertyName}"`;
       new PreviewModal(this.app, {
         title,
         items,
-        confirmLabel: isFr ? `Remplacer dans ${matches.length} fichier(s)` : `Replace in ${matches.length} file(s)`,
-        onConfirm: async () => {
-          const count = await this.executeReplace(propertyName, searchValue, replaceValue, matches);
-          resolve(count);
+        confirmLabel: `Replace in ${matches.length} file(s)`,
+        onConfirm: () => {
+          void (async () => {
+            const count = await this.executeReplace(propertyName, searchValue, replaceValue, matches);
+            resolve(count);
+          })();
         }
       }).open();
     });
@@ -2271,8 +2275,7 @@ var SearchReplaceExecutor = class {
    * Execute the actual replacement
    */
   async executeReplace(propertyName, searchValue, replaceValue, matches) {
-    const isFr = this.languageManager.getCurrentLanguage() === "fr";
-    const progressTitle = isFr ? `Remplacement de "${searchValue}"...` : `Replacing "${searchValue}"...`;
+    const progressTitle = `Replacing "${searchValue}"...`;
     const progress = new ProgressModal(this.app, progressTitle);
     progress.open();
     let count = 0;
@@ -2304,8 +2307,7 @@ var SearchReplaceExecutor = class {
         await new Promise((r) => setTimeout(r, 0));
       }
     }
-    const finishMsg = isFr ? `Termin\xE9 : ${count} fichier(s) modifi\xE9(s).` : `Done: ${count} file(s) modified.`;
-    progress.finish(finishMsg);
+    progress.finish(`Done: ${count} file(s) modified.`);
     return count;
   }
 };
@@ -2357,86 +2359,104 @@ var PropertiesToolkitPlugin = class extends import_obsidian14.Plugin {
     this.addCommand({
       id: "delete-empty-properties",
       name: this.languageManager.command("delete-empty-properties"),
-      callback: () => this.deleteEmptyProperties()
+      callback: () => {
+        this.deleteEmptyProperties();
+      }
     });
     this.addCommand({
       id: "convert-property",
       name: this.languageManager.command("convert-property"),
-      callback: () => this.convertProperty()
+      callback: () => {
+        this.convertProperty();
+      }
     });
     this.addCommand({
       id: "show-doc",
       name: this.languageManager.command("show-doc"),
-      callback: () => this.showDoc()
+      callback: () => {
+        void this.showDoc();
+      }
     });
     this.addCommand({
       id: "search-replace-value",
       name: this.languageManager.command("search-replace-value"),
-      callback: () => this.searchReplaceValue()
+      callback: () => {
+        this.searchReplaceValue();
+      }
     });
     this.addCommand({
       id: "transpose-properties-to-tags",
       name: this.languageManager.command("transpose-properties-to-tags"),
-      callback: async () => {
-        const logs = await this.propertyTransformer.transposePropertiesToTags();
-        if (this.settings.enableLogging && logs.length > 0) {
-          await this.logGenerator.createDetailedLog(
-            this.languageManager.command("transpose-properties-to-tags"),
-            logs
-          );
-        }
+      callback: () => {
+        void (async () => {
+          const logs = await this.propertyTransformer.transposePropertiesToTags();
+          if (this.settings.enableLogging && logs.length > 0) {
+            await this.logGenerator.createDetailedLog(
+              this.languageManager.command("transpose-properties-to-tags"),
+              logs
+            );
+          }
+        })();
       }
     });
     this.addCommand({
       id: "transpose-tags-to-properties",
       name: this.languageManager.command("transpose-tags-to-properties"),
-      callback: async () => {
-        const logs = await this.propertyTransformer.transposeTagsToProperties();
-        if (this.settings.enableLogging && logs.length > 0) {
-          await this.logGenerator.createDetailedLog(
-            this.languageManager.command("transpose-tags-to-properties"),
-            logs
-          );
-        }
+      callback: () => {
+        void (async () => {
+          const logs = await this.propertyTransformer.transposeTagsToProperties();
+          if (this.settings.enableLogging && logs.length > 0) {
+            await this.logGenerator.createDetailedLog(
+              this.languageManager.command("transpose-tags-to-properties"),
+              logs
+            );
+          }
+        })();
       }
     });
     this.addCommand({
       id: "remove-properties",
       name: this.languageManager.command("remove-properties"),
-      callback: async () => {
-        const logs = await this.propertyTransformer.removeCorrespondingProperties();
-        if (this.settings.enableLogging && logs.length > 0) {
-          await this.logGenerator.createDetailedLog(
-            this.languageManager.command("remove-properties"),
-            logs
-          );
-        }
+      callback: () => {
+        void (async () => {
+          const logs = await this.propertyTransformer.removeCorrespondingProperties();
+          if (this.settings.enableLogging && logs.length > 0) {
+            await this.logGenerator.createDetailedLog(
+              this.languageManager.command("remove-properties"),
+              logs
+            );
+          }
+        })();
       }
     });
     this.addCommand({
       id: "remove-tags",
       name: this.languageManager.command("remove-tags"),
-      callback: async () => {
-        const logs = await this.propertyTransformer.removeCorrespondingTags();
-        if (this.settings.enableLogging && logs.length > 0) {
-          await this.logGenerator.createDetailedLog(
-            this.languageManager.command("remove-tags"),
-            logs
-          );
-        }
+      callback: () => {
+        void (async () => {
+          const logs = await this.propertyTransformer.removeCorrespondingTags();
+          if (this.settings.enableLogging && logs.length > 0) {
+            await this.logGenerator.createDetailedLog(
+              this.languageManager.command("remove-tags"),
+              logs
+            );
+          }
+        })();
       }
     });
     this.addCommand({
       id: "analyze-property-tags",
       name: this.languageManager.command("analyze-property-tags"),
-      callback: () => this.analysisGenerator.analyzePropertyTags()
+      callback: () => {
+        void this.analysisGenerator.analyzePropertyTags();
+      }
     });
     this.addCommand({
       id: "generate-modification-report",
       name: this.languageManager.command("generate-modification-report"),
       callback: () => {
         const logs = this.propertyTransformer.getModificationLogs();
-        this.logGenerator.generateModificationReport(logs);
+        void this.logGenerator.generateModificationReport(logs);
       }
     });
   }
@@ -2458,27 +2478,29 @@ var PropertiesToolkitPlugin = class extends import_obsidian14.Plugin {
     new PreviewModal(this.app, {
       title: this.languageManager.command("delete-empty-properties"),
       items,
-      confirmLabel: `${result.totalCount} propri\xE9t\xE9(s) vide(s)`,
-      onConfirm: async () => {
-        const progress = new ProgressModal(this.app, this.languageManager.command("delete-empty-properties"));
-        progress.open();
-        let fileCount = 0;
-        const entries = Array.from(result.byFile.values());
-        for (const entry of entries) {
-          await this.app.fileManager.processFrontMatter(entry.file, (fm) => {
-            for (const prop of entry.emptyProps) {
-              delete fm[prop];
+      confirmLabel: `${result.totalCount} empty property(ies)`,
+      onConfirm: () => {
+        void (async () => {
+          const progress = new ProgressModal(this.app, this.languageManager.command("delete-empty-properties"));
+          progress.open();
+          let fileCount = 0;
+          const entries = Array.from(result.byFile.values());
+          for (const entry of entries) {
+            await this.app.fileManager.processFrontMatter(entry.file, (fm) => {
+              for (const prop of entry.emptyProps) {
+                delete fm[prop];
+              }
+            });
+            fileCount++;
+            progress.setProgress(fileCount, entries.length);
+            if (fileCount % 50 === 0) {
+              await new Promise((r) => setTimeout(r, 0));
             }
-          });
-          fileCount++;
-          progress.setProgress(fileCount, entries.length);
-          if (fileCount % 50 === 0) {
-            await new Promise((r) => setTimeout(r, 0));
           }
-        }
-        progress.finish(
-          `${result.totalCount} propri\xE9t\xE9(s) supprim\xE9e(s) dans ${fileCount} fichier(s).`
-        );
+          progress.finish(
+            `${result.totalCount} property(ies) deleted in ${fileCount} file(s).`
+          );
+        })();
       }
     }).open();
   }
@@ -2496,9 +2518,7 @@ var PropertiesToolkitPlugin = class extends import_obsidian14.Plugin {
       const modal = new import_obsidian14.Modal(this.app);
       const title = lang === "fr" ? "Properties Toolkit \u2014 Aide" : "Properties Toolkit \u2014 Help";
       modal.titleEl.setText(title);
-      modal.modalEl.style.width = "750px";
-      modal.modalEl.style.maxWidth = "90vw";
-      modal.modalEl.style.maxHeight = "80vh";
+      modal.modalEl.addClass("pt-doc-modal");
       modal.contentEl.addClass("pt-doc");
       const component = new import_obsidian14.Component();
       component.load();
@@ -2512,17 +2532,19 @@ var PropertiesToolkitPlugin = class extends import_obsidian14.Plugin {
     }
   }
   searchReplaceValue() {
-    new SearchReplaceModal(this.app, this.languageManager, async (params) => {
-      const executor = new SearchReplaceExecutor(this.app, this.languageManager, this.settings);
-      const count = await executor.executeWithPreview(
-        params.propertyName,
-        params.searchValue,
-        params.replaceValue
-      );
-      if (count === 0) {
-        const isFr = this.languageManager.getCurrentLanguage() === "fr";
-        new import_obsidian14.Notice(isFr ? `Aucune correspondance trouv\xE9e pour "${params.searchValue}" dans "${params.propertyName}"` : `No match found for "${params.searchValue}" in "${params.propertyName}"`);
-      }
+    new SearchReplaceModal(this.app, this.languageManager, (params) => {
+      void (async () => {
+        const executor = new SearchReplaceExecutor(this.app, this.languageManager, this.settings);
+        const count = await executor.executeWithPreview(
+          params.propertyName,
+          params.searchValue,
+          params.replaceValue
+        );
+        if (count === 0) {
+          const isFr = this.languageManager.getCurrentLanguage() === "fr";
+          new import_obsidian14.Notice(isFr ? `No match found for "${params.searchValue}" in "${params.propertyName}"` : `No match found for "${params.searchValue}" in "${params.propertyName}"`);
+        }
+      })();
     }).open();
   }
   convertProperty() {
@@ -2535,14 +2557,16 @@ var PropertiesToolkitPlugin = class extends import_obsidian14.Plugin {
       const analysis = this.scanner.analyzeProperty(propName);
       const applicable = this.registry.getAll().filter((c) => c.isApplicable(analysis));
       if (applicable.length === 0) {
-        new import_obsidian14.Notice(`Aucune op\xE9ration applicable pour "${propName}".`);
+        new import_obsidian14.Notice(`No applicable operation for "${propName}".`);
         return;
       }
-      new OperationSelectorModal(this.app, applicable, async (converter) => {
-        const count = await converter.execute(this.app, analysis);
-        if (count >= 0) {
-          new import_obsidian14.Notice(`Op\xE9ration termin\xE9e : ${count} fichier(s) modifi\xE9(s).`);
-        }
+      new OperationSelectorModal(this.app, applicable, (converter) => {
+        void (async () => {
+          const count = await converter.execute(this.app, analysis);
+          if (count >= 0) {
+            new import_obsidian14.Notice(`Operation complete: ${count} file(s) modified.`);
+          }
+        })();
       }).open();
     }).open();
   }

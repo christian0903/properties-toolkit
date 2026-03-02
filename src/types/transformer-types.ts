@@ -46,7 +46,7 @@ export interface TagInfo {
 }
 
 export interface ParsedContent {
-	metadata: any;
+	metadata: Record<string, string | string[] | number | boolean | null | undefined>;
 	frontmatter: string;
 	body: string;
 	yamlTags: string[];

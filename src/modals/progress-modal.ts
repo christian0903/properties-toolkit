@@ -23,17 +23,17 @@ export class ProgressModal extends Modal {
     this.progressEl.value = 0;
 
     this.textEl = container.createEl('div', { cls: 'pt-progress-text' });
-    this.textEl.setText('Préparation...');
+    this.textEl.setText('Preparing...');
 
     // Prevent closing during operation
     this.modalEl.querySelectorAll('.modal-close-button').forEach(el => {
-      (el as HTMLElement).style.display = 'none';
+      el.addClass('pt-close-button-hidden');
     });
   }
 
   setProgress(current: number, total: number): void {
     this.progressEl.value = (current / total) * 100;
-    this.textEl.setText(`Traitement ${current} / ${total}...`);
+    this.textEl.setText(`Processing ${current} / ${total}...`);
   }
 
   finish(message: string): void {
@@ -42,11 +42,11 @@ export class ProgressModal extends Modal {
 
     // Re-enable closing
     this.modalEl.querySelectorAll('.modal-close-button').forEach(el => {
-      (el as HTMLElement).style.display = '';
+      el.removeClass('pt-close-button-hidden');
     });
 
     const buttons = this.contentEl.createEl('div', { cls: 'pt-button-row' });
-    buttons.createEl('button', { text: 'Fermer', cls: 'mod-cta' })
+    buttons.createEl('button', { text: 'Close', cls: 'mod-cta' })
       .addEventListener('click', () => this.close());
   }
 

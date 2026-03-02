@@ -19,14 +19,14 @@ export class LogGenerator {
 	}
 
 	/**
-	 * Crée un fichier de log détaillé pour une commande
+	 * Create a detailed log file for a command
 	 */
 	async createDetailedLog(commandName: string, modificationLogs: ModificationLog[]): Promise<void> {
 		if (!this.settings.enableLogging || modificationLogs.length === 0) {
 			return;
 		}
 
-		// Utiliser l'heure locale au lieu d'UTC
+		// Use local time instead of UTC
 		const now = new Date();
 		const timestamp = now.getFullYear() + '-' +
 			(now.getMonth() + 1).toString().padStart(2, '0') + '-' +
@@ -43,16 +43,16 @@ export class LogGenerator {
 		logContent += '**' + this.languageManager.log('files-modified') + '**: ' + modificationLogs.length + '\n\n';
 		logContent += '---\n\n';
 
-		// Grouper les changements par fichier pour une présentation plus claire
+		// Group changes by file for clearer presentation
 		const changesByFile: { [fileName: string]: ModificationLog } = {};
 
 		for (const log of modificationLogs) {
 			changesByFile[log.fileName] = log;
 		}
 
-		// Générer le contenu détaillé pour chaque fichier avec le nouveau format
+		// Generate detailed content for each file with new format
 		for (const [fileName, log] of Object.entries(changesByFile)) {
-			// Séparer les changements par type pour une meilleure lisibilité
+			// Separate changes by type for better readability
 			const createdItems: string[] = [];
 			const removedItems: string[] = [];
 			const modifiedItems: string[] = [];
@@ -76,12 +76,12 @@ export class LogGenerator {
 				}
 			}
 
-			// Format de liste imbriquée demandé
+			// Nested list format
 			const totalChanges = createdItems.length + removedItems.length + modifiedItems.length;
 			logContent += '* **' + this.languageManager.log('note') + '**: ' + fileName + '\n';
 			logContent += '   * ' + totalChanges + ' ' + this.languageManager.log('changes-count') + '\n';
 
-			// Afficher les éléments créés
+			// Display created items
 			if (createdItems.length > 0) {
 				logContent += '      * ' + this.languageManager.log('elements-created') + ' (' + createdItems.length + ')\n';
 				for (const item of createdItems) {
@@ -89,7 +89,7 @@ export class LogGenerator {
 				}
 			}
 
-			// Afficher les éléments supprimés
+			// Display removed items
 			if (removedItems.length > 0) {
 				logContent += '      * ' + this.languageManager.log('elements-removed') + ' (' + removedItems.length + ')\n';
 				for (const item of removedItems) {
@@ -97,7 +97,7 @@ export class LogGenerator {
 				}
 			}
 
-			// Afficher les éléments modifiés
+			// Display modified items
 			if (modifiedItems.length > 0) {
 				logContent += '      * ' + this.languageManager.log('elements-modified') + ' (' + modifiedItems.length + ')\n';
 				for (const item of modifiedItems) {
@@ -146,7 +146,7 @@ export class LogGenerator {
 		logContent += '- **' + this.languageManager.log('properties-affected') + '**: ' + propertiesAffected + '\n';
 		logContent += '- **' + this.languageManager.log('tags-affected') + '**: ' + tagsAffected + '\n\n';
 
-		// Informations de configuration utilisée
+		// Configuration information used
 		logContent += '## ' + this.languageManager.log('configuration-used') + '\n\n';
 		logContent += '- **' + this.languageManager.log('target-folder') + '**: ' + (this.settings.targetFolder || this.languageManager.log('vault-root')) + '\n';
 		logContent += '- **' + this.languageManager.log('properties-monitored') + '**: ' + this.settings.propertyList + '\n';
@@ -169,7 +169,7 @@ export class LogGenerator {
 	}
 
 	/**
-	 * Génère un rapport de modifications
+	 * Generate modification report
 	 */
 	async generateModificationReport(modificationLogs: ModificationLog[]): Promise<void> {
 		if (modificationLogs.length === 0) {
@@ -219,7 +219,7 @@ export class LogGenerator {
 	}
 
 	/**
-	 * Met à jour les settings
+	 * Update settings
 	 */
 	updateSettings(newSettings: TransformerSettings): void {
 		this.settings = newSettings;

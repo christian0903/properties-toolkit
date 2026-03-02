@@ -1,8 +1,8 @@
-import { App, PluginSettingTab, Setting } from 'obsidian';
+import { App, Plugin, PluginSettingTab, Setting } from 'obsidian';
 import { TransformerSettings } from '../types/transformer-types';
 import { LanguageManager, Language } from '../lang/LanguageManager';
 
-export interface SettingsManager {
+export interface SettingsManager extends Plugin {
 	settings: TransformerSettings;
 	saveSettings(): Promise<void>;
 	languageManager: LanguageManager;
@@ -12,7 +12,7 @@ export class PropertiesToolkitSettingTab extends PluginSettingTab {
 	private settingsManager: SettingsManager;
 
 	constructor(app: App, settingsManager: SettingsManager) {
-		super(app, settingsManager as any);
+		super(app, settingsManager);
 		this.settingsManager = settingsManager;
 	}
 
@@ -20,14 +20,18 @@ export class PropertiesToolkitSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
-		containerEl.createEl('h2', { text: this.settingsManager.languageManager.setting('title') });
+		new Setting(containerEl)
+			.setName(this.settingsManager.languageManager.setting('title'))
+			.setHeading();
 
 		// ========================================
 		// Section: General Settings
 		// ========================================
-		containerEl.createEl('h3', { text: this.settingsManager.languageManager.setting('section-general') });
+		new Setting(containerEl)
+			.setName(this.settingsManager.languageManager.setting('section-general'))
+			.setHeading();
 
-		// Paramètre de langue
+		// Language setting
 		new Setting(containerEl)
 			.setName(this.settingsManager.languageManager.setting('language'))
 			.setDesc(this.settingsManager.languageManager.setting('language-desc'))
@@ -37,15 +41,15 @@ export class PropertiesToolkitSettingTab extends PluginSettingTab {
 					dropdown.addOption(lang.value, lang.label);
 				});
 				dropdown.setValue(this.settingsManager.settings.language)
-					.onChange(async (value: Language) => {
-						this.settingsManager.settings.language = value;
+					.onChange(async (value: string) => {
+						this.settingsManager.settings.language = value as Language;
 						await this.settingsManager.saveSettings();
 						// Refresh the settings display to update language
 						this.display();
 					});
 			});
 
-		// Dossier cible (en haut pour toutes les opérations)
+		// Target folder (at top for all operations)
 		new Setting(containerEl)
 			.setName(this.settingsManager.languageManager.setting('target-folder'))
 			.setDesc(this.settingsManager.languageManager.setting('target-folder-desc'))
@@ -57,7 +61,7 @@ export class PropertiesToolkitSettingTab extends PluginSettingTab {
 					await this.settingsManager.saveSettings();
 				}));
 
-		// Nom du fichier d'analyse
+		// Analysis file name
 		new Setting(containerEl)
 			.setName(this.settingsManager.languageManager.setting('analysis-filename'))
 			.setDesc(this.settingsManager.languageManager.setting('analysis-filename-desc'))
@@ -69,7 +73,7 @@ export class PropertiesToolkitSettingTab extends PluginSettingTab {
 					await this.settingsManager.saveSettings();
 				}));
 
-		// Activer le logging détaillé
+		// Enable detailed logging
 		new Setting(containerEl)
 			.setName(this.settingsManager.languageManager.setting('enable-logging'))
 			.setDesc(this.settingsManager.languageManager.setting('enable-logging-desc'))
@@ -83,9 +87,11 @@ export class PropertiesToolkitSettingTab extends PluginSettingTab {
 		// ========================================
 		// Section: Transformation Property ↔ Tag
 		// ========================================
-		containerEl.createEl('h3', { text: this.settingsManager.languageManager.setting('section-transformer') });
+		new Setting(containerEl)
+			.setName(this.settingsManager.languageManager.setting('section-transformer'))
+			.setHeading();
 
-		// Liste de propriétés
+		// Property list
 		new Setting(containerEl)
 			.setName(this.settingsManager.languageManager.setting('property-list'))
 			.setDesc(this.settingsManager.languageManager.setting('property-list-desc'))
@@ -97,7 +103,7 @@ export class PropertiesToolkitSettingTab extends PluginSettingTab {
 					await this.settingsManager.saveSettings();
 				}));
 
-		// Écraser les valeurs existantes
+		// Overwrite existing values
 		new Setting(containerEl)
 			.setName(this.settingsManager.languageManager.setting('overwrite'))
 			.setDesc(this.settingsManager.languageManager.setting('overwrite-desc'))
@@ -108,7 +114,7 @@ export class PropertiesToolkitSettingTab extends PluginSettingTab {
 					await this.settingsManager.saveSettings();
 				}));
 
-		// Ajouter à la propriété existante
+		// Append to existing property
 		new Setting(containerEl)
 			.setName(this.settingsManager.languageManager.setting('append-to-existing'))
 			.setDesc(this.settingsManager.languageManager.setting('append-to-existing-desc'))
@@ -119,7 +125,7 @@ export class PropertiesToolkitSettingTab extends PluginSettingTab {
 					await this.settingsManager.saveSettings();
 				}));
 
-		// Supprimer la source après transformation
+		// Remove source after transformation
 		new Setting(containerEl)
 			.setName(this.settingsManager.languageManager.setting('remove-source'))
 			.setDesc(this.settingsManager.languageManager.setting('remove-source-desc'))

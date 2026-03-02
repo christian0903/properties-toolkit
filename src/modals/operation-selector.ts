@@ -9,7 +9,7 @@ export class OperationSelectorModal extends SuggestModal<PropertyConverter> {
     super(app);
     this.converters = converters;
     this.onChoose = onChoose;
-    this.setPlaceholder('Choisir une opération...');
+    this.setPlaceholder('Choose an operation...');
   }
 
   getSuggestions(query: string): PropertyConverter[] {

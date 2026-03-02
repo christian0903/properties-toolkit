@@ -109,3 +109,13 @@
   padding: 1em;
   overflow-y: auto;
 }
+
+.pt-doc-modal {
+  width: 750px;
+  max-width: 90vw;
+  max-height: 80vh;
+}
+
+.pt-close-button-hidden {
+  display: none;
+}

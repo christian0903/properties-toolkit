@@ -1,5 +1,8 @@
 import { TFile, App } from 'obsidian';
 
+/** Represents any valid frontmatter property value */
+export type PropertyValue = string | number | boolean | null | undefined | string[] | number[];
+
 /** Information about a single property across the vault */
 export interface PropertyInfo {
   name: string;
@@ -13,7 +16,7 @@ export interface PropertyInfo {
 export interface PropertyOccurrence {
   file: TFile;
   propertyName: string;
-  currentValue: any;
+  currentValue: PropertyValue;
 }
 
 /** Result of scanning for empty properties vault-wide */

@@ -6,8 +6,8 @@ import { TransformerSettings } from '../types/transformer-types';
 
 export interface SearchReplaceResult {
 	file: TFile;
-	oldValue: any;
-	newValue: any;
+	oldValue: string | string[];
+	newValue: string | string[] | null;
 }
 
 export class SearchReplaceExecutor {
@@ -105,8 +105,6 @@ export class SearchReplaceExecutor {
 			return 0;
 		}
 
-		const isFr = this.languageManager.getCurrentLanguage() === 'fr';
-
 		// Build preview items
 		const items: PreviewItem[] = matches.map(match => {
 			let detail: string;
@@ -116,7 +114,7 @@ export class SearchReplaceExecutor {
 				).filter(v => v !== '∅' || replaceValue);
 				detail = `[${match.oldValue.join(', ')}] → [${replaceValue ? newArr.join(', ') : newArr.filter(v => v !== searchValue).join(', ')}]`;
 			} else {
-				detail = `"${searchValue}" → "${replaceValue || (isFr ? '(supprimé)' : '(deleted)')}"`;
+				detail = `"${searchValue}" → "${replaceValue || '(deleted)'}"`;
 			}
 			return {
 				filePath: match.file.path,
@@ -126,19 +124,17 @@ export class SearchReplaceExecutor {
 		});
 
 		return new Promise((resolve) => {
-			const title = isFr
-				? `Remplacer "${searchValue}" par "${replaceValue || '(supprimer)'}" dans "${propertyName}"`
-				: `Replace "${searchValue}" with "${replaceValue || '(delete)'}" in "${propertyName}"`;
+			const title = `Replace "${searchValue}" with "${replaceValue || '(delete)'}" in "${propertyName}"`;
 
 			new PreviewModal(this.app, {
 				title,
 				items,
-				confirmLabel: isFr
-					? `Remplacer dans ${matches.length} fichier(s)`
-					: `Replace in ${matches.length} file(s)`,
-				onConfirm: async () => {
-					const count = await this.executeReplace(propertyName, searchValue, replaceValue, matches);
-					resolve(count);
+				confirmLabel: `Replace in ${matches.length} file(s)`,
+				onConfirm: () => {
+					void (async () => {
+						const count = await this.executeReplace(propertyName, searchValue, replaceValue, matches);
+						resolve(count);
+					})();
 				}
 			}).open();
 		});
@@ -153,17 +149,14 @@ export class SearchReplaceExecutor {
 		replaceValue: string,
 		matches: SearchReplaceResult[]
 	): Promise<number> {
-		const isFr = this.languageManager.getCurrentLanguage() === 'fr';
-		const progressTitle = isFr
-			? `Remplacement de "${searchValue}"...`
-			: `Replacing "${searchValue}"...`;
+		const progressTitle = `Replacing "${searchValue}"...`;
 
 		const progress = new ProgressModal(this.app, progressTitle);
 		progress.open();
 
 		let count = 0;
 		for (const match of matches) {
-			await this.app.fileManager.processFrontMatter(match.file, (fm: any) => {
+			await this.app.fileManager.processFrontMatter(match.file, (fm: Record<string, unknown>) => {
 				const currentValue = fm[propertyName];
 
 				if (Array.isArray(currentValue)) {
@@ -199,10 +192,7 @@ export class SearchReplaceExecutor {
 			}
 		}
 
-		const finishMsg = isFr
-			? `Terminé : ${count} fichier(s) modifié(s).`
-			: `Done: ${count} file(s) modified.`;
-		progress.finish(finishMsg);
+		progress.finish(`Done: ${count} file(s) modified.`);
 
 		return count;
 	}

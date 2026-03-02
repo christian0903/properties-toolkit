@@ -1,4 +1,4 @@
-import { TFile, Notice } from 'obsidian';
+import { Notice } from 'obsidian';
 import { TransformerSettings, ModificationLog, TagInfo } from '../types/transformer-types';
 import { LanguageManager } from '../lang/LanguageManager';
 import { FrontmatterParser } from './FrontmatterParser';
@@ -24,17 +24,17 @@ export class PropertyTransformer {
 	}
 
 	/**
-	 * Convertit les propriétés YAML en tags
+	 * Convert YAML properties to tags
 	 */
 	async transposePropertiesToTags(): Promise<ModificationLog[]> {
-		const files = await this.fileManager.getTargetFiles();
+		const files = this.fileManager.getTargetFiles();
 		const propertyList = this.fileManager.getPropertyList();
 		let modifiedCount = 0;
 		this.modificationLogs = [];
 
 		for (const file of files) {
 			const content = await this.fileManager.readFile(file);
-			const { metadata, frontmatter, body } = this.frontmatterParser.parseFrontmatter(content);
+			const { metadata, body } = this.frontmatterParser.parseFrontmatter(content);
 			let modified = false;
 			const log: ModificationLog = {
 				fileName: file.path,
@@ -46,13 +46,13 @@ export class PropertyTransformer {
 				if (metadata[propName]) {
 					const propValue = metadata[propName];
 
-					// Gérer les propriétés sous forme de liste
+					// Handle list properties
 					const valuesToProcess = Array.isArray(propValue) ? propValue : [propValue];
 
 					const existingTags = metadata.tags || [];
 					let updatedTags = [...existingTags];
 
-					// Si overwrite est true, supprimer tous les tags existants qui commencent par propName/
+					// If overwrite is true, remove all existing tags starting with propName/
 					if (this.settings.overwrite) {
 						const oldTags = updatedTags.filter((tag: string) => tag.startsWith(propName + '/'));
 						updatedTags = updatedTags.filter((tag: string) => !tag.startsWith(propName + '/'));
@@ -67,12 +67,12 @@ export class PropertyTransformer {
 						}
 					}
 
-					// Créer les nouveaux tags
+					// Create new tags
 					const newTags: string[] = [];
 					for (const singleValue of valuesToProcess) {
 						const newTag = propName + '/' + singleValue;
 
-						// Ajouter le tag s'il n'existe pas déjà
+						// Add tag if it doesn't already exist
 						if (!updatedTags.includes(newTag)) {
 							updatedTags.push(newTag);
 							newTags.push(newTag);
@@ -80,7 +80,7 @@ export class PropertyTransformer {
 						}
 					}
 
-					// Log des nouveaux tags ajoutés
+					// Log new tags added
 					if (newTags.length > 0) {
 						log.changes.push({
 							type: 'tag',
@@ -90,7 +90,7 @@ export class PropertyTransformer {
 						});
 					}
 
-					// Mettre à jour les tags
+					// Update tags
 					metadata.tags = updatedTags;
 
 					if (this.settings.removeSourceAfterTransform) {
@@ -121,17 +121,17 @@ export class PropertyTransformer {
 	}
 
 	/**
-	 * Convertit les tags en propriétés YAML
+	 * Convert tags to YAML properties
 	 */
 	async transposeTagsToProperties(): Promise<ModificationLog[]> {
-		const files = await this.fileManager.getTargetFiles();
+		const files = this.fileManager.getTargetFiles();
 		const propertyList = this.fileManager.getPropertyList();
 		let modifiedCount = 0;
 		this.modificationLogs = [];
 
 		for (const file of files) {
 			const content = await this.fileManager.readFile(file);
-			const { metadata, frontmatter, body, yamlTags, inlineTags } = this.frontmatterParser.parseFrontmatter(content);
+			const { metadata, body, yamlTags, inlineTags } = this.frontmatterParser.parseFrontmatter(content);
 			let modified = false;
 			const log: ModificationLog = {
 				fileName: file.path,
@@ -160,15 +160,15 @@ export class PropertyTransformer {
 				if (relevantTagInfos.length > 0) {
 					const propValues = relevantTagInfos.map(tagInfo => tagInfo.tag.split('/')[1]);
 
-					// Condition corrigée : traiter si propriété n'existe pas, ou si appendToExistingProperty est true, ou si overwrite est true
+					// Process if property doesn't exist, or if appendToExistingProperty is true, or if overwrite is true
 					if (!metadata[propName] || this.settings.appendToExistingProperty || this.settings.overwrite) {
 						const oldValue = metadata[propName];
 
-						// Nouveau comportement avec appendToExistingProperty
+						// New behavior with appendToExistingProperty
 						if (oldValue && this.settings.appendToExistingProperty && !this.settings.overwrite) {
-							// Mode ajout : transformer en liste et ajouter les valeurs
+							// Append mode: transform to list and add values
 							if (Array.isArray(oldValue)) {
-								// Déjà une liste, ajouter les nouvelles valeurs si pas déjà présentes
+								// Already a list, add new values if not already present
 								const newValues = propValues.filter(val => !oldValue.includes(val));
 								if (newValues.length > 0) {
 									metadata[propName] = [...oldValue, ...newValues];
@@ -181,7 +181,7 @@ export class PropertyTransformer {
 									});
 								}
 							} else {
-								// String, transformer en liste avec toutes les nouvelles valeurs
+								// String, transform to list with all new values
 								metadata[propName] = [oldValue, ...propValues];
 								modified = true;
 								log.changes.push({
@@ -192,7 +192,7 @@ export class PropertyTransformer {
 								});
 							}
 						} else {
-							// Comportement standard : remplacer avec toutes les valeurs
+							// Standard behavior: replace with all values
 							if (propValues.length === 1) {
 								metadata[propName] = propValues[0];
 							} else {
@@ -248,17 +248,17 @@ export class PropertyTransformer {
 	}
 
 	/**
-	 * Supprime les propriétés correspondant aux tags existants
+	 * Remove properties corresponding to existing tags
 	 */
 	async removeCorrespondingProperties(): Promise<ModificationLog[]> {
-		const files = await this.fileManager.getTargetFiles();
+		const files = this.fileManager.getTargetFiles();
 		const propertyList = this.fileManager.getPropertyList();
 		let modifiedCount = 0;
 		this.modificationLogs = [];
 
 		for (const file of files) {
 			const content = await this.fileManager.readFile(file);
-			const { metadata, frontmatter, body, yamlTags, inlineTags } = this.frontmatterParser.parseFrontmatter(content);
+			const { metadata, body, yamlTags, inlineTags } = this.frontmatterParser.parseFrontmatter(content);
 			let modified = false;
 			const log: ModificationLog = {
 				fileName: file.path,
@@ -308,17 +308,17 @@ export class PropertyTransformer {
 	}
 
 	/**
-	 * Supprime les tags correspondant aux propriétés existantes
+	 * Remove tags corresponding to existing properties
 	 */
 	async removeCorrespondingTags(): Promise<ModificationLog[]> {
-		const files = await this.fileManager.getTargetFiles();
+		const files = this.fileManager.getTargetFiles();
 		const propertyList = this.fileManager.getPropertyList();
 		let modifiedCount = 0;
 		this.modificationLogs = [];
 
 		for (const file of files) {
 			const content = await this.fileManager.readFile(file);
-			const { metadata, frontmatter, body, yamlTags, inlineTags } = this.frontmatterParser.parseFrontmatter(content);
+			const { metadata, body, yamlTags, inlineTags } = this.frontmatterParser.parseFrontmatter(content);
 			let modified = false;
 			const log: ModificationLog = {
 				fileName: file.path,
@@ -382,7 +382,7 @@ export class PropertyTransformer {
 	}
 
 	/**
-	 * Met à jour les settings
+	 * Update settings
 	 */
 	updateSettings(newSettings: TransformerSettings): void {
 		this.settings = newSettings;
@@ -390,14 +390,14 @@ export class PropertyTransformer {
 	}
 
 	/**
-	 * Récupère les logs de modification
+	 * Get modification logs
 	 */
 	getModificationLogs(): ModificationLog[] {
 		return this.modificationLogs;
 	}
 
 	/**
-	 * Vide les logs de modification
+	 * Clear modification logs
 	 */
 	clearModificationLogs(): void {
 		this.modificationLogs = [];

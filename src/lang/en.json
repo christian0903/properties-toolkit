@@ -12,10 +12,10 @@
     "search-replace-value": "Search and replace value in property"
   },
   "settings": {
-    "title": "Properties Toolkit Settings",
-    "section-general": "General Settings",
-    "section-manager": "Property Management",
-    "section-transformer": "Property ↔ Tag Transformation",
+    "title": "Properties Toolkit settings",
+    "section-general": "General settings",
+    "section-manager": "Property management",
+    "section-transformer": "Property ↔ tag transformation",
     "language": "Language",
     "language-desc": "Plugin interface language",
     "target-folder": "Target folder",

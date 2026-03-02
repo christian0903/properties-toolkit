@@ -7,7 +7,7 @@ import { updatePropertyType } from '../core/type-updater';
 export class TextToListConverter implements PropertyConverter {
   id = 'text-to-list';
   label = 'Text → List';
-  description = 'Convertir les valeurs texte en liste (enveloppe chaque valeur dans une liste)';
+  description = 'Convert text values to list (wraps each value in a list)';
 
   isApplicable(analysis: PropertyAnalysis): boolean {
     return analysis.textFiles.length > 0;
@@ -27,28 +27,30 @@ export class TextToListConverter implements PropertyConverter {
       new PreviewModal(app, {
         title: `Text → List : "${propName}"`,
         items,
-        confirmLabel: `Convertir ${textFiles.length} fichier(s)`,
-        onConfirm: async () => {
-          const progress = new ProgressModal(app, `Conversion de "${propName}"...`);
-          progress.open();
+        confirmLabel: `Convert ${textFiles.length} file(s)`,
+        onConfirm: () => {
+          void (async () => {
+            const progress = new ProgressModal(app, `Conversion de "${propName}"...`);
+            progress.open();
 
-          let count = 0;
-          for (const occ of textFiles) {
-            await app.fileManager.processFrontMatter(occ.file, (fm: any) => {
-              if (typeof fm[propName] === 'string') {
-                fm[propName] = [fm[propName]];
+            let count = 0;
+            for (const occ of textFiles) {
+              await app.fileManager.processFrontMatter(occ.file, (fm: Record<string, unknown>) => {
+                if (typeof fm[propName] === 'string') {
+                  fm[propName] = [fm[propName]];
+                }
+              });
+              count++;
+              progress.setProgress(count, textFiles.length);
+              if (count % 50 === 0) {
+                await new Promise(r => setTimeout(r, 0));
               }
-            });
-            count++;
-            progress.setProgress(count, textFiles.length);
-            if (count % 50 === 0) {
-              await new Promise(r => setTimeout(r, 0));
             }
-          }
 
-          await updatePropertyType(app, propName, 'multitext');
-          progress.finish(`Terminé : ${count} fichier(s) converti(s).`);
-          resolve(count);
+            await updatePropertyType(app, propName, 'multitext');
+            progress.finish(`Done: ${count} file(s) converted.`);
+            resolve(count);
+          })();
         },
       }).open();
     });

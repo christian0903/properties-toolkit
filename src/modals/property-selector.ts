@@ -9,7 +9,7 @@ export class PropertySelectorModal extends FuzzySuggestModal<PropertyInfo> {
     super(app);
     this.properties = properties;
     this.onChoose = onChoose;
-    this.setPlaceholder('Tapez pour filtrer les propriétés...');
+    this.setPlaceholder('Type to filter properties...');
   }
 
   getItems(): PropertyInfo[] {
@@ -17,7 +17,7 @@ export class PropertySelectorModal extends FuzzySuggestModal<PropertyInfo> {
   }
 
   getItemText(item: PropertyInfo): string {
-    return `${item.name} (${item.fileCount} fichiers)`;
+    return `${item.name} (${item.fileCount} files)`;
   }
 
   onChooseItem(item: PropertyInfo, _evt: MouseEvent | KeyboardEvent): void {

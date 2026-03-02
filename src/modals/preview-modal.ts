@@ -29,7 +29,7 @@ export class PreviewModal extends Modal {
     contentEl.createEl('h2', { text: this.config.title });
 
     const summary = contentEl.createEl('div', { cls: 'pt-summary' });
-    summary.setText(`${this.config.items.length} fichier(s) concerné(s)`);
+    summary.setText(`${this.config.items.length} file(s) affected`);
 
     const list = contentEl.createEl('div', { cls: 'pt-preview-list' });
 
@@ -45,13 +45,13 @@ export class PreviewModal extends Modal {
     if (this.config.items.length > MAX_VISIBLE) {
       list.createEl('div', {
         cls: 'pt-preview-item',
-        text: `… et ${this.config.items.length - MAX_VISIBLE} autre(s)`,
+        text: `... and ${this.config.items.length - MAX_VISIBLE} more`,
       });
     }
 
     const buttons = contentEl.createEl('div', { cls: 'pt-button-row' });
 
-    const cancelBtn = buttons.createEl('button', { text: 'Annuler' });
+    const cancelBtn = buttons.createEl('button', { text: 'Cancel' });
     cancelBtn.addEventListener('click', () => this.close());
 
     const confirmBtn = buttons.createEl('button', {

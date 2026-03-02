@@ -1,5 +1,6 @@
-import { App, TFile } from 'obsidian';
-import { PropertyConverter, PropertyAnalysis, PropertyOccurrence } from '../types/mgr-types';
+import { App } from 'obsidian';
+import { PropertyConverter, PropertyAnalysis, PropertyValue } from '../types/mgr-types';
+import type { TFile } from 'obsidian';
 import { PreviewModal, PreviewItem } from '../modals/preview-modal';
 import { ProgressModal } from '../modals/progress-modal';
 import { MultiValueChoiceModal, MultiValueChoices } from '../modals/multi-value-choice-modal';
@@ -7,13 +8,13 @@ import { updatePropertyType } from '../core/type-updater';
 
 interface FileConversion {
   file: TFile;
-  chosenValue: any;
+  chosenValue: PropertyValue;
 }
 
 export class ListToTextConverter implements PropertyConverter {
   id = 'list-to-text';
   label = 'List → Text';
-  description = 'Convertir les valeurs liste en texte simple (garde une seule valeur)';
+  description = 'Convert list values to plain text (keeps a single value)';
 
   isApplicable(analysis: PropertyAnalysis): boolean {
     return analysis.singleValueFiles.length > 0 || analysis.multiValueFiles.length > 0;
@@ -68,27 +69,29 @@ export class ListToTextConverter implements PropertyConverter {
     new PreviewModal(app, {
       title: `List → Text : "${propName}"`,
       items,
-      confirmLabel: `Convertir ${conversions.length} fichier(s)`,
-      onConfirm: async () => {
-        const progress = new ProgressModal(app, `Conversion de "${propName}"...`);
-        progress.open();
+      confirmLabel: `Convert ${conversions.length} file(s)`,
+      onConfirm: () => {
+        void (async () => {
+          const progress = new ProgressModal(app, `Conversion de "${propName}"...`);
+          progress.open();
 
-        let count = 0;
-        for (const conv of conversions) {
-          const val = conv.chosenValue;
-          await app.fileManager.processFrontMatter(conv.file, (fm: any) => {
-            fm[propName] = val;
-          });
-          count++;
-          progress.setProgress(count, conversions.length);
-          if (count % 50 === 0) {
-            await new Promise(r => setTimeout(r, 0));
+          let count = 0;
+          for (const conv of conversions) {
+            const val = conv.chosenValue;
+            await app.fileManager.processFrontMatter(conv.file, (fm: Record<string, PropertyValue>) => {
+              fm[propName] = val;
+            });
+            count++;
+            progress.setProgress(count, conversions.length);
+            if (count % 50 === 0) {
+              await new Promise(r => setTimeout(r, 0));
+            }
           }
-        }
 
-        await updatePropertyType(app, propName, 'text');
-        progress.finish(`Terminé : ${count} fichier(s) converti(s).`);
-        resolve(count);
+          await updatePropertyType(app, propName, 'text');
+          progress.finish(`Done: ${count} file(s) converted.`);
+          resolve(count);
+        })();
       },
     }).open();
   }

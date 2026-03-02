@@ -2,14 +2,14 @@ import { App, TFile, TFolder, normalizePath } from 'obsidian';
 import { PropertyInfo, EmptyScanResult, PropertyAnalysis, PropertyOccurrence } from '../types/mgr-types';
 import { TransformerSettings } from '../types/transformer-types';
 
-function isEmpty(value: any): boolean {
+function isEmpty(value: unknown): boolean {
   if (value === null || value === undefined) return true;
   if (value === '') return true;
   if (Array.isArray(value) && value.length === 0) return true;
   return false;
 }
 
-function getValueType(value: any): string {
+function getValueType(value: unknown): string {
   if (value === null || value === undefined) return 'null';
   if (Array.isArray(value)) return 'array';
   return typeof value;

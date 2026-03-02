@@ -14,16 +14,16 @@ export class FileManager {
 	}
 
 	/**
-	 * Détermine les fichiers à traiter selon le paramètre targetFolder
+	 * Determine files to process based on targetFolder setting
 	 */
-	async getTargetFiles(): Promise<TFile[]> {
+	getTargetFiles(): TFile[] {
 		const folderPath = this.settings.targetFolder.trim();
 
 		if (!folderPath) {
 			return this.app.vault.getMarkdownFiles();
 		}
 
-		// Normaliser le chemin pour éviter les problèmes de slash
+		// Normalize path to avoid slash issues
 		const normalizedPath = normalizePath(folderPath);
 		const folder = this.app.vault.getAbstractFileByPath(normalizedPath);
 
@@ -58,7 +58,7 @@ export class FileManager {
 	}
 
 	/**
-	 * Parse la liste des propriétés depuis les settings
+	 * Parse property list from settings
 	 */
 	getPropertyList(): string[] {
 		return this.settings.propertyList
@@ -68,21 +68,21 @@ export class FileManager {
 	}
 
 	/**
-	 * Lit le contenu d'un fichier
+	 * Read file content
 	 */
 	async readFile(file: TFile): Promise<string> {
 		return await this.app.vault.read(file);
 	}
 
 	/**
-	 * Modifie le contenu d'un fichier
+	 * Modify file content
 	 */
 	async writeFile(file: TFile, content: string): Promise<void> {
 		await this.app.vault.modify(file, content);
 	}
 
 	/**
-	 * Crée ou écrase un fichier
+	 * Create or overwrite a file
 	 */
 	async createFile(path: string, content: string): Promise<void> {
 		const normalizedPath = normalizePath(path);
@@ -98,7 +98,7 @@ export class FileManager {
 	}
 
 	/**
-	 * Met à jour les settings (utilisé par les autres modules)
+	 * Update settings (used by other modules)
 	 */
 	updateSettings(newSettings: TransformerSettings): void {
 		this.settings = newSettings;

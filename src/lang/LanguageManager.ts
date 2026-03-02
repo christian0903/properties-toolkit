@@ -33,15 +33,16 @@ export class LanguageManager {
 		// Multiple methods to detect Obsidian language
 		try {
 			// Method 1: Via moment.js (used by Obsidian)
-			const momentLang = (window as any).moment?.locale();
+			const windowWithMoment = window as Window & { moment?: { locale: () => string } };
+			const momentLang = windowWithMoment.moment?.locale();
 			if (momentLang && momentLang.startsWith('fr')) return 'fr';
 
 			// Method 2: Via DOM elements
 			const htmlLang = document.documentElement.lang;
 			if (htmlLang && htmlLang.startsWith('fr')) return 'fr';
 
-		} catch (error) {
-			console.log('Could not detect Obsidian language, falling back to English');
+		} catch {
+			console.debug('Could not detect Obsidian language, falling back to English');
 		}
 
 		return 'en'; // Fallback to English
