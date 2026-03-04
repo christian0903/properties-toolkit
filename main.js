@@ -803,7 +803,7 @@ var ListToTextConverter = class {
     const items = conversions.map((conv) => ({
       filePath: conv.file.path,
       fileName: conv.file.basename,
-      detail: `\u2192 "${conv.chosenValue}"`
+      detail: `\u2192 "${String(conv.chosenValue)}"`
     }));
     new PreviewModal(app, {
       title: `List \u2192 Text : "${propName}"`,
@@ -851,7 +851,7 @@ var TextToListConverter = class {
       const items = textFiles.map((occ) => ({
         filePath: occ.file.path,
         fileName: occ.file.basename,
-        detail: `"${occ.currentValue}" \u2192 ["${occ.currentValue}"]`
+        detail: `"${String(occ.currentValue)}" \u2192 ["${String(occ.currentValue)}"]`
       }));
       new PreviewModal(app, {
         title: `Text \u2192 List : "${propName}"`,
@@ -1470,12 +1470,12 @@ var PropertyTransformer = class {
       for (const propName of propertyList) {
         if (metadata[propName]) {
           const propValue = metadata[propName];
-          const correspondingTag = propName + "/" + propValue;
+          const correspondingTag = propName + "/" + String(propValue);
           if (allTags.includes(correspondingTag)) {
             log.changes.push({
               type: "property",
               action: "removed",
-              before: propName + ": " + propValue,
+              before: propName + ": " + String(propValue),
               after: ""
             });
             delete metadata[propName];
@@ -1517,7 +1517,7 @@ var PropertyTransformer = class {
       for (const propName of propertyList) {
         if (metadata[propName]) {
           const propValue = metadata[propName];
-          const correspondingTag = propName + "/" + propValue;
+          const correspondingTag = propName + "/" + String(propValue);
           if ((this.settings.tagSearchLocation === "yaml" || this.settings.tagSearchLocation === "both") && yamlTags.includes(correspondingTag)) {
             tagsToRemoveFromYaml.push(correspondingTag);
             log.changes.push({
@@ -1926,9 +1926,9 @@ var AnalysisGenerator = class {
       for (const propName of propertyList) {
         if (metadata[propName]) {
           const propValue = metadata[propName];
-          analysis.relevantProperties[propName] = propValue;
+          analysis.relevantProperties[propName] = String(propValue);
           fileHasRelevantContent = true;
-          const newTag = propName + "/" + propValue;
+          const newTag = propName + "/" + String(propValue);
           const existingTags = metadata.tags || [];
           const tagExists = existingTags.some((tag) => tag.startsWith(propName + "/"));
           if (!tagExists || this.settings.overwrite) {
@@ -2288,8 +2288,9 @@ var SearchReplaceExecutor = class {
               (v) => v === searchValue ? replaceValue : v
             );
           } else {
-            fm[propertyName] = currentValue.filter((v) => v !== searchValue);
-            if (fm[propertyName].length === 0) {
+            const filtered = currentValue.filter((v) => v !== searchValue);
+            fm[propertyName] = filtered;
+            if (filtered.length === 0) {
               delete fm[propertyName];
             }
           }

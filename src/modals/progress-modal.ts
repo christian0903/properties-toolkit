@@ -1,8 +1,8 @@
 import { App, Modal } from 'obsidian';
 
 export class ProgressModal extends Modal {
-  private progressEl: HTMLProgressElement;
-  private textEl: HTMLElement;
+  private progressEl!: HTMLProgressElement;
+  private textEl!: HTMLElement;
   private title: string;
 
   constructor(app: App, title: string) {

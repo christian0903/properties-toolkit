@@ -21,7 +21,7 @@ export class TextToListConverter implements PropertyConverter {
       const items: PreviewItem[] = textFiles.map(occ => ({
         filePath: occ.file.path,
         fileName: occ.file.basename,
-        detail: `"${occ.currentValue}" → ["${occ.currentValue}"]`,
+        detail: `"${String(occ.currentValue)}" → ["${String(occ.currentValue)}"]`,
       }));
 
       new PreviewModal(app, {

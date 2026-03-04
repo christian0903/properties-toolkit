@@ -167,9 +167,10 @@ export class SearchReplaceExecutor {
 						);
 					} else {
 						// Remove value from array
-						fm[propertyName] = currentValue.filter(v => v !== searchValue);
+						const filtered = currentValue.filter(v => v !== searchValue);
+						fm[propertyName] = filtered;
 						// If array is empty, remove property
-						if (fm[propertyName].length === 0) {
+						if (filtered.length === 0) {
 							delete fm[propertyName];
 						}
 					}

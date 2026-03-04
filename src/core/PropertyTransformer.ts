@@ -49,7 +49,7 @@ export class PropertyTransformer {
 					// Handle list properties
 					const valuesToProcess = Array.isArray(propValue) ? propValue : [propValue];
 
-					const existingTags = metadata.tags || [];
+					const existingTags = (metadata.tags || []) as string[];
 					let updatedTags = [...existingTags];
 
 					// If overwrite is true, remove all existing tags starting with propName/
@@ -182,7 +182,7 @@ export class PropertyTransformer {
 								}
 							} else {
 								// String, transform to list with all new values
-								metadata[propName] = [oldValue, ...propValues];
+								metadata[propName] = [oldValue as string, ...propValues];
 								modified = true;
 								log.changes.push({
 									type: 'property',
@@ -229,8 +229,8 @@ export class PropertyTransformer {
 			}
 
 			if (tagsToRemoveFromYaml.length > 0) {
-				const currentYamlTags = metadata.tags || [];
-				metadata.tags = currentYamlTags.filter((tag: string) => !tagsToRemoveFromYaml.includes(tag));
+				const currentYamlTags = (metadata.tags || []) as string[];
+				metadata.tags = currentYamlTags.filter(tag => !tagsToRemoveFromYaml.includes(tag));
 			}
 
 			if (modified) {
@@ -277,13 +277,13 @@ export class PropertyTransformer {
 			for (const propName of propertyList) {
 				if (metadata[propName]) {
 					const propValue = metadata[propName];
-					const correspondingTag = propName + '/' + propValue;
+					const correspondingTag = propName + '/' + String(propValue);
 
 					if (allTags.includes(correspondingTag)) {
 						log.changes.push({
 							type: 'property',
 							action: 'removed',
-							before: propName + ': ' + propValue,
+							before: propName + ': ' + String(propValue),
 							after: ''
 						});
 
@@ -332,7 +332,7 @@ export class PropertyTransformer {
 			for (const propName of propertyList) {
 				if (metadata[propName]) {
 					const propValue = metadata[propName];
-					const correspondingTag = propName + '/' + propValue;
+					const correspondingTag = propName + '/' + String(propValue);
 
 					if ((this.settings.tagSearchLocation === 'yaml' || this.settings.tagSearchLocation === 'both')
 						&& yamlTags.includes(correspondingTag)) {
@@ -363,8 +363,8 @@ export class PropertyTransformer {
 			}
 
 			if (tagsToRemoveFromYaml.length > 0) {
-				const currentYamlTags = metadata.tags || [];
-				metadata.tags = currentYamlTags.filter((tag: string) => !tagsToRemoveFromYaml.includes(tag));
+				const currentYamlTags = (metadata.tags || []) as string[];
+				metadata.tags = currentYamlTags.filter(tag => !tagsToRemoveFromYaml.includes(tag));
 			}
 
 			if (modified) {

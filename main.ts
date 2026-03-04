@@ -20,19 +20,19 @@ import { SearchReplaceModal } from './src/modals/search-replace-modal';
 import { SearchReplaceExecutor } from './src/converters/search-replace';
 
 export default class PropertiesToolkitPlugin extends Plugin {
-	settings: TransformerSettings;
-	languageManager: LanguageManager;
+	settings!: TransformerSettings;
+	languageManager!: LanguageManager;
 
 	// Properties Manager modules
 	private scanner!: VaultScanner;
 	private registry!: ConverterRegistry;
 
 	// Property Transformer modules
-	private frontmatterParser: FrontmatterParser;
-	private fileManager: FileManager;
-	private propertyTransformer: PropertyTransformer;
-	private logGenerator: LogGenerator;
-	private analysisGenerator: AnalysisGenerator;
+	private frontmatterParser!: FrontmatterParser;
+	private fileManager!: FileManager;
+	private propertyTransformer!: PropertyTransformer;
+	private logGenerator!: LogGenerator;
+	private analysisGenerator!: AnalysisGenerator;
 
 	async onload() {
 		await this.loadSettings();

@@ -243,12 +243,12 @@ export class AnalysisGenerator {
 			for (const propName of propertyList) {
 				if (metadata[propName]) {
 					const propValue = metadata[propName];
-					analysis.relevantProperties[propName] = propValue;
+					analysis.relevantProperties[propName] = String(propValue);
 					fileHasRelevantContent = true;
 
-					const newTag = propName + '/' + propValue;
-					const existingTags = metadata.tags || [];
-					const tagExists = existingTags.some((tag: string) => tag.startsWith(propName + '/'));
+					const newTag = propName + '/' + String(propValue);
+					const existingTags = (metadata.tags || []) as string[];
+					const tagExists = existingTags.some(tag => tag.startsWith(propName + '/'));
 
 					if (!tagExists || this.settings.overwrite) {
 						if (this.settings.tagsInYamlZone) {

@@ -63,7 +63,7 @@ export class ListToTextConverter implements PropertyConverter {
     const items: PreviewItem[] = conversions.map(conv => ({
       filePath: conv.file.path,
       fileName: conv.file.basename,
-      detail: `→ "${conv.chosenValue}"`,
+      detail: `→ "${String(conv.chosenValue)}"`,
     }));
 
     new PreviewModal(app, {
