@@ -54,7 +54,7 @@ export class PropertiesToolkitSettingTab extends PluginSettingTab {
 			.setName(this.settingsManager.languageManager.setting('target-folder'))
 			.setDesc(this.settingsManager.languageManager.setting('target-folder-desc'))
 			.addText(text => text
-				.setPlaceholder('path/to/folder')
+				.setPlaceholder('Path/to/folder')
 				.setValue(this.settingsManager.settings.targetFolder)
 				.onChange(async (value) => {
 					this.settingsManager.settings.targetFolder = value;
@@ -66,7 +66,7 @@ export class PropertiesToolkitSettingTab extends PluginSettingTab {
 			.setName(this.settingsManager.languageManager.setting('analysis-filename'))
 			.setDesc(this.settingsManager.languageManager.setting('analysis-filename-desc'))
 			.addText(text => text
-				.setPlaceholder('properties-analysis')
+				.setPlaceholder('Properties-analysis')
 				.setValue(this.settingsManager.settings.analysisFileName)
 				.onChange(async (value) => {
 					this.settingsManager.settings.analysisFileName = value || 'properties-analysis';

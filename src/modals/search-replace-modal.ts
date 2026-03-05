@@ -34,7 +34,7 @@ export class SearchReplaceModal extends Modal {
 			.setName('Property name')
 			.setDesc('The property to search in')
 			.addText(text => text
-				.setPlaceholder('e.g. status, type, category')
+				.setPlaceholder('E.g. status, type, category')
 				.onChange(value => {
 					this.params.propertyName = value.trim();
 				}));
@@ -44,7 +44,7 @@ export class SearchReplaceModal extends Modal {
 			.setName('Search value')
 			.setDesc('The exact value to replace')
 			.addText(text => text
-				.setPlaceholder('old value')
+				.setPlaceholder('Old value')
 				.onChange(value => {
 					this.params.searchValue = value;
 				}));
@@ -54,7 +54,7 @@ export class SearchReplaceModal extends Modal {
 			.setName('Replace value')
 			.setDesc('The new value (empty = delete)')
 			.addText(text => text
-				.setPlaceholder('new value')
+				.setPlaceholder('New value')
 				.onChange(value => {
 					this.params.replaceValue = value;
 				}));

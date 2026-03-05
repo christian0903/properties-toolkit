@@ -2075,11 +2075,11 @@ var PropertiesToolkitSettingTab = class extends import_obsidian11.PluginSettingT
         this.display();
       });
     });
-    new import_obsidian11.Setting(containerEl).setName(this.settingsManager.languageManager.setting("target-folder")).setDesc(this.settingsManager.languageManager.setting("target-folder-desc")).addText((text) => text.setPlaceholder("path/to/folder").setValue(this.settingsManager.settings.targetFolder).onChange(async (value) => {
+    new import_obsidian11.Setting(containerEl).setName(this.settingsManager.languageManager.setting("target-folder")).setDesc(this.settingsManager.languageManager.setting("target-folder-desc")).addText((text) => text.setPlaceholder("Path/to/folder").setValue(this.settingsManager.settings.targetFolder).onChange(async (value) => {
       this.settingsManager.settings.targetFolder = value;
       await this.settingsManager.saveSettings();
     }));
-    new import_obsidian11.Setting(containerEl).setName(this.settingsManager.languageManager.setting("analysis-filename")).setDesc(this.settingsManager.languageManager.setting("analysis-filename-desc")).addText((text) => text.setPlaceholder("properties-analysis").setValue(this.settingsManager.settings.analysisFileName).onChange(async (value) => {
+    new import_obsidian11.Setting(containerEl).setName(this.settingsManager.languageManager.setting("analysis-filename")).setDesc(this.settingsManager.languageManager.setting("analysis-filename-desc")).addText((text) => text.setPlaceholder("Properties-analysis").setValue(this.settingsManager.settings.analysisFileName).onChange(async (value) => {
       this.settingsManager.settings.analysisFileName = value || "properties-analysis";
       await this.settingsManager.saveSettings();
     }));
@@ -2137,13 +2137,13 @@ var SearchReplaceModal = class extends import_obsidian12.Modal {
     contentEl.empty();
     contentEl.addClass("pt-modal");
     contentEl.createEl("h2", { text: "Search and replace value" });
-    new import_obsidian12.Setting(contentEl).setName("Property name").setDesc("The property to search in").addText((text) => text.setPlaceholder("e.g. status, type, category").onChange((value) => {
+    new import_obsidian12.Setting(contentEl).setName("Property name").setDesc("The property to search in").addText((text) => text.setPlaceholder("E.g. status, type, category").onChange((value) => {
       this.params.propertyName = value.trim();
     }));
-    new import_obsidian12.Setting(contentEl).setName("Search value").setDesc("The exact value to replace").addText((text) => text.setPlaceholder("old value").onChange((value) => {
+    new import_obsidian12.Setting(contentEl).setName("Search value").setDesc("The exact value to replace").addText((text) => text.setPlaceholder("Old value").onChange((value) => {
       this.params.searchValue = value;
     }));
-    new import_obsidian12.Setting(contentEl).setName("Replace value").setDesc("The new value (empty = delete)").addText((text) => text.setPlaceholder("new value").onChange((value) => {
+    new import_obsidian12.Setting(contentEl).setName("Replace value").setDesc("The new value (empty = delete)").addText((text) => text.setPlaceholder("New value").onChange((value) => {
       this.params.replaceValue = value;
     }));
     const buttonRow = contentEl.createEl("div", { cls: "pt-button-row" });
