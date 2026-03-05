@@ -34,7 +34,7 @@ export class SearchReplaceModal extends Modal {
 			.setName('Property name')
 			.setDesc('The property to search in')
 			.addText(text => text
-				.setPlaceholder('E.g. status, type, category')
+				.setPlaceholder('E.G. Status, type, category')
 				.onChange(value => {
 					this.params.propertyName = value.trim();
 				}));
